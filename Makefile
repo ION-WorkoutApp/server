@@ -10,7 +10,7 @@ moveLogs:
 
 run: moveLogs
 	docker compose up -d
-	cloudflared tunnel run test &> logs/cloudflared.log & || true
+	cloudflared tunnel run test &> logs/cloudflared.log &
 	docker compose logs -f > logs/docker.log &
 
 dockerSystemReset:
@@ -26,7 +26,7 @@ resetLocal:
 
 stop: moveLogs
 	docker compose down -v
-	pkill cloudflared || true
+	pkill cloudflared
 
 restart:
 	make stop || true
