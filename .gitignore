@@ -2,5 +2,6 @@ secrets/
 data/
 *.env
 temp.*
+logs/
 .logs_old/
 node_modules/
