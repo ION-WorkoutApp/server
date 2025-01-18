@@ -1,3 +1,0 @@
-2025-01-18T01:01:12.660Z [34mdebug[39m: Server is running on http://172.18.0.3:1221
-2025-01-18T01:01:12.690Z [32minfo[39m: Connected to MongoDB
-2025-01-18T01:01:12.710Z [34mdebug[39m: Data already exists in the database. Skipping download and import.
