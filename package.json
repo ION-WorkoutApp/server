@@ -1,0 +1,27 @@
+{
+  "name": "workout-app",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "description": "",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "csv-parser": "^3.1.0",
+    "dns": "^0.2.2",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.9.3",
+    "node-fetch": "^3.3.2",
+    "pidusage": "^3.0.2",
+    "sqlite": "^5.1.1",
+    "sqlite3": "^5.1.7",
+    "validator": "^13.12.0",
+    "winston": "^3.17.0"
+  }
+}

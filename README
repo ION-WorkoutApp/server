@@ -1,0 +1,34 @@
+# The Server for the ION Workout App
+
+## Setup
+*NOTE: The default `run` command will attempt to run a cloudflared tunnel to foreward the server, make sure this is set up first if you want this functionality*
+
+1. clone this repo
+2. create the ENV file (see the **Environment** section below)
+3. run `make run`
+4. run `make fixPermissions`
+5. run `make restart`
+
+*Why `make fixPermissions`? Because mongodb does funny things with permissions then can't read it's own data directory*
+
+
+# Environment
+Create an env file in the base directory called `.env` with the following structure:
+
+```env
+PORT=yourPort
+SECRET_KEY=yourSecret
+MONGO_URI=mongodb://yourUser:yourPassword@mongodb:27017/userDatabase?authSource=admin
+MONGO_INITDB_ROOT_USERNAME=yourUser
+MONGO_INITDB_ROOT_PASSWORD=yourPassword
+MONGO_DATABASE=maindb
+```
+
+
+## Reset the Database
+just run `make resetLocal`
+
+
+# Credits!
+
+I couldn't get the default function to work for some reason, but credit to the blocked email list goes to https://github.com/IntegerAlex/disposable-email-detector, awesome tool!

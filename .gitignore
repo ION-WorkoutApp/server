@@ -1,0 +1,6 @@
+secrets/
+data/
+*.env
+temp.*
+.logs_old/
+node_modules/
