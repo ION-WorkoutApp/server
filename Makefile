@@ -30,7 +30,7 @@ stop: moveLogs
 
 restart:
 	make stop || true
-	make run
+	timeout 5.0s make run
 
 fixPermissions:
 	sudo chown -R 999:999 data/mongodb_data

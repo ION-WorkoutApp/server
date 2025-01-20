@@ -18,7 +18,9 @@ export const exerciseSchema = new mongoose.Schema({
 
 export const workoutSchema = new mongoose.Schema({
     exercises: { type: Array, required: true },
-    totalTime: { type: Number, required: true }
+    totalTime: { type: Number, required: true },
+    isSaved: { type: Boolean, required: true, default: false },
+    workoutName: { type: String, required: false }
 }, { timestamps: true });
 
 

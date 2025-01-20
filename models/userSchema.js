@@ -13,7 +13,8 @@ export const userSchema = new mongoose.Schema({
     preferredWorkoutType: { type: String, required: true },
     comfortLevel: { type: String, required: true },
     refreshToken: { type: String, required: false },
-    workouts: { type: [mongoose.Schema.Types.ObjectId], ref: 'Workout', default: [] }
+    workouts: { type: [mongoose.Schema.Types.ObjectId], ref: 'Workout', default: [] },
+    savedWorkouts: { type: [mongoose.Schema.Types.ObjectId], ref: 'Workout', default: [] },
 });
 
 

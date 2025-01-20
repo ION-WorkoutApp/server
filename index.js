@@ -8,7 +8,7 @@ import checkUsage from './tests/measureUsage.js';
 import { Exercise, Workout } from './models/exerciseSchema.js';
 import { checkFetchAndImport } from './functions/importCSV.js';
 import logger from './helpers/logger.js';
-import { deleteUserWorkout, getUserWorkouts, insertUserWorkout } from './functions/manageUserData.js';
+import { addSavedWorkout, deleteSavedWorkout, deleteUserWorkout, getUserWorkouts, insertUserWorkout, renameUserWorkout } from './functions/manageUserData.js';
 
 
 if (!process.env.SECRET_KEY) throw "PLEASE MAKE SURE THE SECRET KEY IS IN THE ENV FILE";
@@ -311,6 +311,59 @@ app.delete('/workout', verifyToken, async (req, res) => {
         console.error(err);
         res.sendStatus(500);
     }
+});
+
+//#endregion
+
+
+//#region saved workouts
+
+app.get('/savedworkouts', verifyToken, async (req, res) => {
+    try {
+        const user = await User.findOne({ email: req.user.email }).populate('savedWorkouts'),
+            r = await getUserWorkouts(user, true);
+
+        res.send(JSON.stringify(r));
+    }
+    catch (err) {
+        console.error(err);
+        res.sendStatus(500);
+    }
+});
+
+app.post('/savedworkouts', verifyToken, async (req, res) => {
+    const { workoutname, workout } = req.body
+    if (!workout || !workoutname) return res.sendStatus(501)
+
+    const user = await User.findOne({ email: req.user.email });
+    if (!user) return res.status(404).send("user not found");
+
+    const r = await addSavedWorkout(workout, workoutname, user);
+    res.sendStatus(r);
+});
+
+
+app.delete('/savedworkouts', verifyToken, async (req, res) => {
+    const { workoutId } = req.body;
+    if (!workoutId) return res.status(404).send('no workoutID provided!');
+
+    const user = await User.findOne({ email: req.user.email }).populate('savedWorkouts');
+    if (!user) return res.status(404).send("user not found");
+
+    const r = await deleteSavedWorkout(workoutId, user);
+    res.status(r.code).send(r.message);
+});
+
+
+app.put('/savedworkouts', verifyToken, async (req, res) => {
+    const { workoutId, newName } = req.body;
+    if (!workoutId || !newName) return res.sendStatus(501)
+
+    const user = await User.findOne({ email: req.user.email }).populate('savedWorkouts');
+    if (!user) return res.status(404).send("user not found");
+
+    const r = await renameUserWorkout(workoutId, newName, user);
+    res.status(r.code).send(r.message);
 });
 
 
