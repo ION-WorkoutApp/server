@@ -28,6 +28,7 @@ function validateWorkoutData(workout, workoutName) {
                 restTime: ex.restTime
             })),
             totalTime: workout.totalTime,
+            workoutTime: workout.workoutTime,
             workoutName: workoutName
         } : null;
     }
@@ -42,6 +43,7 @@ const saveWorkout = async (workoutData, isSaved = false) => {
     const newWorkout = new Workout({
         exercises: workoutData.exercises,
         totalTime: workoutData.totalTime,
+        workoutTime: workoutData.workoutTime,
         isSaved: isSaved,
         workoutName: workoutData.workoutName
     });
@@ -77,6 +79,32 @@ export async function insertUserWorkout(user, workoutRaw) {
         if (!workoutId) return 501;
 
         await addWorkoutToUser(user, workoutId);
+        return 200;
+    }
+    catch (err) {
+        logger.error(err);
+        return 500;
+    }
+}
+
+
+/**
+ * @param {userSchema} user 
+ * @param {String} workoutId
+ * @param {Number} newTime 
+ */
+export async function updateUserWorkout(user, workoutId, newTime) {
+    try {
+        // convert workoutId to ObjectId
+        const objectId = new mongoose.Types.ObjectId(workoutId),
+            workoutIndex = user.workouts.findIndex(workout => workout._id.equals(objectId));
+
+        if (!user) return 404;
+        else if (workoutIndex === -1) return 400;
+
+        user.workouts[workoutIndex].workoutTime = newTime;
+        await user.save();
+
         return 200;
     }
     catch (err) {
@@ -154,7 +182,7 @@ export async function deleteSavedWorkout(workoutId, user) {
  * @param {String} newName 
  * @param {userSchema} user
  */
-export async function renameUserWorkout(workoutId, newName, user) {
+export async function renameUserWorkout(workoutId, user, newName, newTime) {
     try {
         if (!user) return { code: 404, message: "User not found" };
 
@@ -167,7 +195,8 @@ export async function renameUserWorkout(workoutId, newName, user) {
         if (!workout) return { code: 404, message: "Workout not found in database" };
 
         // update the workout name
-        workout.workoutName = newName;
+        if (newName) workout.workoutName = newName;
+        if (newTime) workout.totalTime = newTime;
         await workout.save();
 
         return { code: 200, message: `Workout name changed to "${newName}"` };
@@ -205,9 +234,7 @@ export const deleteUserWorkout = async (user, workoutId) => {
         const objectId = new mongoose.Types.ObjectId(workoutId),
             workoutIndex = user.workouts.find(w => (w._id.equals(objectId)));
 
-        if (workoutIndex === -1) {
-            return { success: false, message: 'Workout not found for this user' };
-        }
+        if (workoutIndex === -1) return { success: false, message: 'Workout not found for this user' };
 
         // Remove the workoutId from the user's workouts array
         user.workouts.splice(workoutIndex, 1);

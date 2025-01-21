@@ -8,7 +8,7 @@ import checkUsage from './tests/measureUsage.js';
 import { Exercise, Workout } from './models/exerciseSchema.js';
 import { checkFetchAndImport } from './functions/importCSV.js';
 import logger from './helpers/logger.js';
-import { addSavedWorkout, deleteSavedWorkout, deleteUserWorkout, getUserWorkouts, insertUserWorkout, renameUserWorkout } from './functions/manageUserData.js';
+import { addSavedWorkout, deleteSavedWorkout, deleteUserWorkout, getUserWorkouts, insertUserWorkout, renameUserWorkout, updateUserWorkout } from './functions/manageUserData.js';
 
 
 if (!process.env.SECRET_KEY) throw "PLEASE MAKE SURE THE SECRET KEY IS IN THE ENV FILE";
@@ -59,6 +59,9 @@ const verifyToken = (req, res, next) => {
     }
 };
 
+
+// ping endpoint
+app.head('/', async (_, res) => { try { res.sendStatus(200) } catch (err) { console.error(err); } });
 
 
 // Route to initialize account
@@ -289,6 +292,23 @@ app.post('/workout', verifyToken, async (req, res) => {
 });
 
 
+app.put('/workout', verifyToken, async (req, res) => {
+    try {
+        const { workoutId, newTime } = req.body;
+
+        if (!workoutId || !newTime) return res.sendStatus(400);
+
+        const user = await User.findOne({ email: req.user.email });
+        const r = await updateUserWorkout(user, workoutId, newTime);
+        res.sendStatus(r);
+    }
+    catch (err) {
+        console.error(err);
+        res.sendStatus(500)
+    }
+});
+
+
 app.get('/workouts', verifyToken, async (req, res) => {
     const user = await User.findOne({ email: req.user.email }).populate('workouts'),
         r = await getUserWorkouts(user);
@@ -356,13 +376,13 @@ app.delete('/savedworkouts', verifyToken, async (req, res) => {
 
 
 app.put('/savedworkouts', verifyToken, async (req, res) => {
-    const { workoutId, newName } = req.body;
-    if (!workoutId || !newName) return res.sendStatus(501)
+    const { workoutId, newName, newTime } = req.body;
+    if (!workoutId || (!newName && !newTime)) return res.sendStatus(501)
 
     const user = await User.findOne({ email: req.user.email }).populate('savedWorkouts');
     if (!user) return res.status(404).send("user not found");
 
-    const r = await renameUserWorkout(workoutId, newName, user);
+    const r = await renameUserWorkout(workoutId, user, newName, newTime);
     res.status(r.code).send(r.message);
 });
 
