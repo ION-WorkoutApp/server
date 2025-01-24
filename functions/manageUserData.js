@@ -1,6 +1,6 @@
 import logger from '../helpers/logger.js';
 import { Workout } from '../models/exerciseSchema.js';
-import { userSchema } from '../models/userSchema.js';
+import { User, userSchema } from '../models/userSchema.js';
 import mongoose from 'mongoose';
 
 
@@ -134,7 +134,7 @@ export async function addSavedWorkout(workoutRaw, workoutName, user) {
         return 200;
     }
     catch (err) {
-        console.error(err);
+        logger.error(err);
         return 500;
     }
 }
@@ -171,7 +171,7 @@ export async function deleteSavedWorkout(workoutId, user) {
 
         return { code: 200, message: "" };
     } catch (err) {
-        console.error(err);
+        logger.error(err);
         return { code: 500, message: "" };
     }
 }
@@ -201,22 +201,25 @@ export async function renameUserWorkout(workoutId, user, newName, newTime) {
 
         return { code: 200, message: `Workout name changed to "${newName}"` };
     } catch (err) {
-        console.error(err);
+        logger.error(err);
         return { code: 500, message: "An error occurred while renaming the workout" };
     }
 }
 
 
-export const getUserWorkouts = async (user, saved = false) => {
+export const getUserWorkouts = async (email, saved = false, offset = 0) => {
     try {
-        // Find the user and populate their workouts
-        if (!user) {
-            return { success: false, message: 'User not found' };
-        }
+        const user = await User.findOne({ email: email });
+        if (!user) return { success: false, message: 'User not found' };
+
+        await user.populate({
+            path: saved ? 'savedWorkouts' : 'workouts',
+            options: saved ? {} : { limit: 10, skip: offset }
+        });
 
         return { success: true, workouts: (saved) ? user.savedWorkouts : user.workouts };
     } catch (err) {
-        console.error('Error fetching user workouts:', err);
+        logger.error('Error fetching user workouts:', err);
         return { success: false, message: 'Error fetching user workouts' };
     }
 };
@@ -232,7 +235,7 @@ export const deleteUserWorkout = async (user, workoutId) => {
 
         // convert workoutId to ObjectId
         const objectId = new mongoose.Types.ObjectId(workoutId),
-            workoutIndex = user.workouts.find(w => (w._id.equals(objectId)));
+            workoutIndex = user.workouts.findIndex(w => (w._id.equals(objectId)));
 
         if (workoutIndex === -1) return { success: false, message: 'Workout not found for this user' };
 
@@ -240,8 +243,7 @@ export const deleteUserWorkout = async (user, workoutId) => {
         user.workouts.splice(workoutIndex, 1);
         await user.save();
 
-        // Optionally, delete the workout document from the Workout collection
-        await Workout.findByIdAndDelete(workoutId);
+        await Workout.findByIdAndDelete(objectId);
 
         return { success: true, message: 'Workout deleted successfully' };
     } catch (err) {

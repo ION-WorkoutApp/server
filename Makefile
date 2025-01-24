@@ -23,6 +23,8 @@ dockerSystemReset:
 resetLocal:
 	make stop || true
 	sudo rm -rf data/
+	rm -rf logs/
+	rm -rf .logs_old/
 
 stop: moveLogs
 	docker compose down -v
@@ -35,3 +37,12 @@ restart:
 fixPermissions:
 	sudo chown -R 999:999 data/mongodb_data
 	sudo chmod -R 0755 data/mongodb_data
+
+status:
+	@echo "============================================================="
+	@echo "Docker"
+	@docker ps
+	@echo "-------------------------------------------------------------"
+	@echo "Cloudflared"
+	@pgrep -a cloudflared || echo "Cloudflared is not running."
+	@echo "============================================================="
