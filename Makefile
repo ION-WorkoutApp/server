@@ -5,12 +5,13 @@ main: moveLogs run
 
 # single backup of logs
 moveLogs:
+	mkdir -p logs || true
 	mkdir -p .logs_old || true
 	mv -f logs/* .logs_old/ || true
 
 run: moveLogs
 	docker compose up -d
-	cloudflared tunnel run test &> logs/cloudflared.log &
+	@pgrep -a cloudflared || cloudflared tunnel run test &> logs/cloudflared.log &
 	docker compose logs -f > logs/docker.log &
 
 dockerSystemReset:
@@ -22,9 +23,7 @@ dockerSystemReset:
 
 resetLocal:
 	make stop || true
-	sudo rm -rf data/
-	rm -rf logs/
-	rm -rf .logs_old/
+	sudo sh -c 'rm -rf data/ && rm -rf logs/ && rm -rf .logs_old/'
 
 stop: moveLogs
 	docker compose down -v
@@ -35,8 +34,12 @@ restart:
 	timeout 5.0s make run
 
 fixPermissions:
-	sudo chown -R 999:999 data/mongodb_data
-	sudo chmod -R 0755 data/mongodb_data
+	sudo sh -c ' \
+		chown -R 999:999 data/mongodb_data logs .logs_old && \
+		chmod -R 0755 data/mongodb_data && \
+		[ -d logs ] && chmod -R 0777 logs && \
+		[ -d .logs_old ] && chmod -R 0777 .logs_old \
+	'
 
 status:
 	@echo "============================================================="
