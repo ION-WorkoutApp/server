@@ -1,253 +1,400 @@
+// workoutService.js
+
 import logger from '../helpers/logger.js';
-import { Workout } from '../models/exerciseSchema.js';
-import { User, userSchema } from '../models/userSchema.js';
+import { Workout, Exercise } from '../models/exerciseSchema.js'; // Combined import for schema models
+import { User } from '../models/userSchema.js';
 import mongoose from 'mongoose';
 
-
-function validateWorkoutData(workout, workoutName) {
+/**
+ * Validates and transforms raw workout data to match the updated Workout schema.
+ * @param {Object} workoutRaw - The raw workout data input.
+ * @param {String} [workoutName] - Optional workout name.
+ * @returns {Object|null} - The validated and transformed workout data or null if invalid.
+ */
+async function validateWorkoutData(workoutRaw, workoutName = '') {
     try {
-        return workout ? {
-            exercises: workout.exercises.map(ex => ({
-                exerciseId: ex.exercise.exerciseId,
-                title: ex.exercise.title,
-                description: ex.exercise.description,
-                type: ex.exercise.type,
-                bodyPart: ex.exercise.bodyPart,
-                equipment: ex.exercise.equipment,
-                level: ex.exercise.level,
-                rating: ex.exercise.rating,
-                ratingDescription: ex.exercise.ratingDescription,
-                videoPath: ex.exercise.videoPath,
-                timeBased: ex.exercise.timeBased,
-                reps: ex.reps,
-                times: ex.times,
-                weight: ex.weight,
-                sets: ex.sets,
-                setsDone: ex.setsdone,
-                isDone: ex.isDone,
-                restTime: ex.restTime
-            })),
-            totalTime: workout.totalTime,
-            workoutTime: workout.workoutTime,
-            workoutName: workoutName
-        } : null;
-    }
-    catch (err) {
-        logger.error(err);
+        if (!workoutRaw) {
+            throw new Error('No workout data provided.');
+        }
+
+        // Transform each superset in workoutRaw to the new superset structure
+        const supersets = await Promise.all(
+            workoutRaw.supersets.map(async (superset) => {
+                if (!superset.exercises || superset.exercises.length === 0) {
+                    throw new Error('Superset must contain at least one exercise.');
+                }
+
+                // Transform each exercise instance within the superset
+                const exercises = await Promise.all(
+                    superset.exercises.map(async (exerciseInstance) => {
+                        // Find the Exercise document by exerciseId
+                        const exercise = await Exercise.findOne({ exerciseId: exerciseInstance.exercise.exerciseId });
+                        if (!exercise) {
+                            throw new Error(`Exercise with ID ${exerciseInstance.exercise.exerciseId} not found.`);
+                        }
+
+                        // Map reps, times, and weight using the metricSchema structure
+                        const mapMetrics = (metrics) => {
+                            return metrics.map(metric => ({
+                                id: metric.id,
+                                isDone: metric.isDone || false,
+                                restTime: metric.restTime || 0,
+                                value: metric.value || 0
+                            }));
+                        };
+
+                        return {
+                            exercise: exercise._id, // Reference to the Exercise document
+                            id: exerciseInstance.id || new mongoose.Types.ObjectId(),
+                            isDone: exerciseInstance.isDone || false,
+                            reps: mapMetrics(exerciseInstance.reps || []),
+                            times: mapMetrics(exerciseInstance.times || []),
+                            weight: mapMetrics(exerciseInstance.weight || []),
+                            restTime: exerciseInstance.restTime || 0,
+                            sets: exerciseInstance.sets || 1,
+                            setsDone: exerciseInstance.setsDone || 0,
+                        };
+                    })
+                );
+
+                return {
+                    currentExerciseIndex: superset.currentExerciseIndex || 0,
+                    exercises,
+                    id: superset.id || new mongoose.Types.ObjectId().toString(),
+                    isDone: superset.isDone || false,
+                    isSingleExercise: superset.isSingleExercise || false,
+                };
+            })
+        );
+
+        // Calculate totalTime if not provided (optional enhancement)
+        const totalTime = workoutRaw.totalTime || workoutRaw.supersets.reduce((acc, superset) => {
+            // Example calculation: sum of rest times + exercise times
+            const supersetTime = superset.exercises.reduce((sAcc, ex) => sAcc + ex.restTime, 0);
+            return acc + supersetTime;
+        }, 0);
+
+        return {
+            supersets,
+            totalTime,
+            workoutTime: workoutRaw.workoutTime || totalTime,
+            workoutName,
+        };
+    } catch (err) {
+        logger.error(`validateWorkoutData Error: ${err.message}`);
         return null;
     }
 }
 
-
+/**
+ * Saves a new workout to the database.
+ * @param {Object} workoutData - The validated workout data.
+ * @param {Boolean} isSaved - Indicates if the workout is a saved workout.
+ * @returns {ObjectId|null} - The ID of the newly created workout or null if failed.
+ */
 const saveWorkout = async (workoutData, isSaved = false) => {
-    const newWorkout = new Workout({
-        exercises: workoutData.exercises,
-        totalTime: workoutData.totalTime,
-        workoutTime: workoutData.workoutTime,
-        isSaved: isSaved,
-        workoutName: workoutData.workoutName
-    });
+    try {
+        const newWorkout = new Workout({
+            supersets: workoutData.supersets,
+            totalTime: workoutData.totalTime,
+            workoutTime: workoutData.workoutTime,
+            isSaved: isSaved,
+            workoutName: workoutData.workoutName || '',
+        });
 
-    await newWorkout.save();
-    return newWorkout._id; // Return the ID for linking to the User
+        await newWorkout.save();
+        return newWorkout._id;
+    } catch (err) {
+        logger.error(`saveWorkout Error: ${err.message}`);
+        return null;
+    }
 };
 
-
 /**
- * @param {userSchema} user 
- * @param {*} workoutId 
+ * Adds a workout ID to the user's workouts array.
+ * @param {Object} user - The user document.
+ * @param {ObjectId} workoutId - The workout ID to add.
  */
 const addWorkoutToUser = async (user, workoutId) => {
-    if (!user) throw new Error('User not found');
+    try {
+        if (!user) throw new Error('User not found.');
 
-    user.workouts.push(workoutId); // Add the workout ID to the user's workouts
-    await user.save();
+        user.workouts.push(workoutId);
+        await user.save();
+    } catch (err) {
+        logger.error(`addWorkoutToUser Error: ${err.message}`);
+        throw err;
+    }
 };
 
-
 /**
- * @param {userSchema} user 
- * @param {*} workout 
+ * Inserts a workout for a user by validating, saving, and linking the workout.
+ * @param {Object} user - The user document.
+ * @param {Object} workoutRaw - The raw workout data input.
+ * @returns {Number} - HTTP status code indicating the result.
  */
 export async function insertUserWorkout(user, workoutRaw) {
     try {
-        const workout = validateWorkoutData(workoutRaw);
-        if (!user) return 404;
-        else if (!workout) return 400;
+        if (!user) {
+            logger.warn('insertUserWorkout: User not found.');
+            return 404;
+        }
+
+        const workout = await validateWorkoutData(workoutRaw);
+        if (!workout) {
+            logger.warn('insertUserWorkout: Invalid workout data.');
+            return 400;
+        }
 
         const workoutId = await saveWorkout(workout);
-        if (!workoutId) return 501;
+        if (!workoutId) {
+            logger.error('insertUserWorkout: Failed to save workout.');
+            return 500;
+        }
 
         await addWorkoutToUser(user, workoutId);
         return 200;
-    }
-    catch (err) {
-        logger.error(err);
+    } catch (err) {
+        logger.error(`insertUserWorkout Error: ${err.message}`);
         return 500;
     }
 }
 
-
 /**
- * @param {userSchema} user 
- * @param {String} workoutId
- * @param {Number} newTime 
+ * Updates the workout time for a user's specific workout.
+ * @param {Object} user - The user document.
+ * @param {String} workoutId - The ID of the workout to update.
+ * @param {Number} newTime - The new workout time in seconds.
+ * @returns {Number} - HTTP status code indicating the result.
  */
 export async function updateUserWorkout(user, workoutId, newTime) {
     try {
-        // convert workoutId to ObjectId
-        const objectId = new mongoose.Types.ObjectId(workoutId),
-            workoutIndex = user.workouts.findIndex(workout => workout._id.equals(objectId));
+        if (!user) {
+            logger.warn('updateUserWorkout: User not found.');
+            return 404;
+        }
 
-        if (!user) return 404;
-        else if (workoutIndex === -1) return 400;
+        if (!mongoose.Types.ObjectId.isValid(workoutId)) {
+            logger.warn('updateUserWorkout: Invalid workoutId format.');
+            return 400;
+        }
 
-        user.workouts[workoutIndex].workoutTime = newTime;
-        await user.save();
+        const workout = await Workout.findById(workoutId);
+        if (!workout) {
+            logger.warn(`updateUserWorkout: Workout with ID ${workoutId} not found.`);
+            return 404;
+        }
+
+        workout.workoutTime = newTime;
+        await workout.save();
 
         return 200;
-    }
-    catch (err) {
-        logger.error(err);
+    } catch (err) {
+        logger.error(`updateUserWorkout Error: ${err.message}`);
         return 500;
     }
 }
 
-
 /**
- * @param {*} workoutRaw
- * @param {String} workoutName 
- * @param {userSchema} user
+ * Adds a saved workout for a user by validating, saving, and linking the workout.
+ * @param {Object} workoutRaw - The raw workout data input.
+ * @param {String} workoutName - The name of the workout.
+ * @param {Object} user - The user document.
+ * @returns {Number} - HTTP status code indicating the result.
  */
 export async function addSavedWorkout(workoutRaw, workoutName, user) {
     try {
-        const workout = validateWorkoutData(workoutRaw, workoutName);
-        if (!user) return 404;
-        else if (!workout) return 400;
+        if (!user) {
+            logger.warn('addSavedWorkout: User not found.');
+            return 404;
+        }
+
+        const workout = await validateWorkoutData(workoutRaw, workoutName);
+        if (!workout) {
+            logger.warn('addSavedWorkout: Invalid workout data.');
+            return 400;
+        }
 
         const workoutId = await saveWorkout(workout, true);
-        if (!workoutId) return 501;
+        if (!workoutId) {
+            logger.error('addSavedWorkout: Failed to save workout.');
+            return 500;
+        }
 
         user.savedWorkouts.push(workoutId);
         await user.save();
 
         return 200;
-    }
-    catch (err) {
-        logger.error(err);
+    } catch (err) {
+        logger.error(`addSavedWorkout Error: ${err.message}`);
         return 500;
     }
 }
 
-
 /**
- * @param {userSchema} user 
- * @param {String} workoutId 
- * @returns {Number}
+ * Finds the index of a saved workout in the user's savedWorkouts array.
+ * @param {Object} user - The user document.
+ * @param {String} workoutId - The ID of the workout to find.
+ * @returns {Number} - The index of the workout or -1 if not found.
  */
 const findSavedWorkout = (user, workoutId) => {
-    // convert workoutId to ObjectId
+    if (!mongoose.Types.ObjectId.isValid(workoutId)) {
+        return -1;
+    }
+
     const objectId = new mongoose.Types.ObjectId(workoutId);
-
-    // find the workout index
-    return user.savedWorkouts.findIndex(workout => workout._id.equals(objectId));
-}
-
+    return user.savedWorkouts.findIndex(workout => workout.equals(objectId));
+};
 
 /**
- * @param {String} workoutId 
- * @param {userSchema} user
+ * Deletes a saved workout from the user's savedWorkouts array and removes it from the database.
+ * @param {String} workoutId - The ID of the workout to delete.
+ * @param {Object} user - The user document.
+ * @returns {Object} - An object containing the status code and message.
  */
 export async function deleteSavedWorkout(workoutId, user) {
     try {
-        if (!user) return { code: 404, message: "user not found" };
+        if (!user) {
+            logger.warn('deleteSavedWorkout: User not found.');
+            return { code: 404, message: 'User not found' };
+        }
 
         const workoutIndex = findSavedWorkout(user, workoutId);
-        if (workoutIndex === -1) return { code: 404, message: "workout not found" };
+        if (workoutIndex === -1) {
+            logger.warn(`deleteSavedWorkout: Workout with ID ${workoutId} not found in savedWorkouts.`);
+            return { code: 404, message: 'Workout not found' };
+        }
 
         user.savedWorkouts.splice(workoutIndex, 1);
+        await Promise.all([
+            user.save(),
+            Workout.findByIdAndDelete(workoutId)
+        ]);
 
-        await Promise.all([user.save(), Workout.findOneAndDelete({ _id: workoutId })]);
-
-        return { code: 200, message: "" };
+        return { code: 200, message: 'Workout deleted successfully' };
     } catch (err) {
-        logger.error(err);
-        return { code: 500, message: "" };
+        logger.error(`deleteSavedWorkout Error: ${err.message}`);
+        return { code: 500, message: 'Internal server error' };
     }
 }
-
 
 /**
- * @param {String} workoutId 
- * @param {String} newName 
- * @param {userSchema} user
+ * Renames a user's workout and optionally updates its totalTime.
+ * @param {String} workoutId - The ID of the workout to rename.
+ * @param {Object} user - The user document.
+ * @param {String} newName - The new name for the workout.
+ * @param {Number} [newTime] - The new total time for the workout in seconds.
+ * @returns {Object} - An object containing the status code and message.
  */
-export async function renameUserWorkout(workoutId, user, newName, newTime) {
+export async function renameUserWorkout(workoutId, user, newName, newTime = null) {
     try {
-        if (!user) return { code: 404, message: "User not found" };
+        if (!user) {
+            logger.warn('renameUserWorkout: User not found.');
+            return { code: 404, message: 'User not found' };
+        }
 
-        // find the workout index
-        const workoutIndex = findSavedWorkout(user, workoutId);
-        if (workoutIndex === -1) return { code: 404, message: "Workout not found" };
+        const isSavedWorkout = user.savedWorkouts.some(workout => workout.equals(workoutId));
+        const isRegularWorkout = user.workouts.some(workout => workout.equals(workoutId));
 
-        // fetch the actual workout document
+        if (!isSavedWorkout && !isRegularWorkout) {
+            logger.warn(`renameUserWorkout: Workout with ID ${workoutId} not associated with user.`);
+            return { code: 404, message: 'Workout not found for this user' };
+        }
+
         const workout = await Workout.findById(workoutId);
-        if (!workout) return { code: 404, message: "Workout not found in database" };
+        if (!workout) {
+            logger.warn(`renameUserWorkout: Workout with ID ${workoutId} not found in database.`);
+            return { code: 404, message: 'Workout not found in database' };
+        }
 
-        // update the workout name
-        if (newName) workout.workoutName = newName;
-        if (newTime) workout.totalTime = newTime;
+        if (newName) {
+            workout.workoutName = newName;
+        }
+
+        if (newTime !== null) { // Allow setting newTime to 0
+            workout.totalTime = newTime;
+        }
+
         await workout.save();
 
-        return { code: 200, message: `Workout name changed to "${newName}"` };
+        return { code: 200, message: `Workout updated successfully${newName ? ` to "${newName}"` : ''}` };
     } catch (err) {
-        logger.error(err);
-        return { code: 500, message: "An error occurred while renaming the workout" };
+        logger.error(`renameUserWorkout Error: ${err.message}`);
+        return { code: 500, message: 'An error occurred while renaming the workout' };
     }
 }
 
-
-export const getUserWorkouts = async (email, saved = false, offset = 0) => {
+/**
+ * Retrieves workouts for a user, either saved or regular workouts, with pagination support.
+ * @param {String} email - The email of the user.
+ * @param {Boolean} [saved=false] - Whether to retrieve saved workouts or regular workouts.
+ * @param {Number} [offset=0] - The pagination offset.
+ * @param {Number} [limit=10] - The number of workouts to retrieve.
+ * @returns {Object} - An object indicating success and containing the workouts or an error message.
+ */
+export const getUserWorkouts = async (email, saved = false, offset = 0, limit = 10) => {
     try {
         const user = await User.findOne({ email: email });
-        if (!user) return { success: false, message: 'User not found' };
+        if (!user) {
+            logger.warn('getUserWorkouts: User not found.');
+            return { success: false, message: 'User not found' };
+        }
 
-        await user.populate({
+        const populateOptions = {
             path: saved ? 'savedWorkouts' : 'workouts',
-            options: saved ? {} : { limit: 10, skip: offset }
-        });
+            populate: {
+                path: 'supersets.exercises.exercise', // Populate the Exercise within each exercise instance
+                model: 'Exercise'
+            },
+            options: saved ? {} : { limit: limit, skip: offset }
+        };
 
-        return { success: true, workouts: (saved) ? user.savedWorkouts : user.workouts };
+        await user.populate(populateOptions).execPopulate();
+
+        return {
+            success: true,
+            workouts: saved ? user.savedWorkouts : user.workouts
+        };
     } catch (err) {
-        logger.error('Error fetching user workouts:', err);
+        logger.error(`getUserWorkouts Error: ${err.message}`);
         return { success: false, message: 'Error fetching user workouts' };
     }
 };
 
-
 /**
- * @param {userSchema} user 
- * @param {string} workoutId 
+ * Deletes a workout from a user's workouts array and removes it from the database.
+ * @param {Object} user - The user document.
+ * @param {String} workoutId - The ID of the workout to delete.
+ * @returns {Object} - An object containing the success status and message.
  */
 export const deleteUserWorkout = async (user, workoutId) => {
     try {
-        if (!user) return { success: false, message: 'User not found' };
+        if (!user) {
+            logger.warn('deleteUserWorkout: User not found.');
+            return { success: false, message: 'User not found' };
+        }
 
-        // convert workoutId to ObjectId
-        const objectId = new mongoose.Types.ObjectId(workoutId),
-            workoutIndex = user.workouts.findIndex(w => (w._id.equals(objectId)));
+        const isSavedWorkout = user.savedWorkouts.some(workout => workout.equals(workoutId));
+        const isRegularWorkout = user.workouts.some(workout => workout.equals(workoutId));
 
-        if (workoutIndex === -1) return { success: false, message: 'Workout not found for this user' };
+        if (!isSavedWorkout && !isRegularWorkout) {
+            logger.warn(`deleteUserWorkout: Workout with ID ${workoutId} not associated with user.`);
+            return { success: false, message: 'Workout not found for this user' };
+        }
 
-        // Remove the workoutId from the user's workouts array
-        user.workouts.splice(workoutIndex, 1);
+        // Determine which array to remove from
+        if (isSavedWorkout) {
+            user.savedWorkouts = user.savedWorkouts.filter(workout => !workout.equals(workoutId));
+        } else if (isRegularWorkout) {
+            user.workouts = user.workouts.filter(workout => !workout.equals(workoutId));
+        }
+
         await user.save();
-
-        await Workout.findByIdAndDelete(objectId);
+        await Workout.findByIdAndDelete(workoutId);
 
         return { success: true, message: 'Workout deleted successfully' };
     } catch (err) {
-        logger.error('Error deleting user workout:', err);
+        logger.error(`deleteUserWorkout Error: ${err.message}`);
         return { success: false, message: 'Error deleting user workout' };
     }
-}
+};

@@ -56,9 +56,13 @@ export async function getWorkoutsOnDay(email, date, offset) {
             path: 'workouts',
             match: { createdAt: { $gte: date[0], $lte: date[1] } },
             options: { limit: 10, skip: offset },
+            populate: {
+                path: 'supersets.exercises.exercise', // Deeply populate the exercise field
+                model: 'Exercise'
+            }
         });
 
-        return user;
+        return { success: true, workouts: user.workouts };
     } catch (err) {
         logger.error(err);
         return { code: 500, message: err.message };
