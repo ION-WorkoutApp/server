@@ -2,6 +2,8 @@ import mongoose from 'mongoose';
 
 
 // exercise schema
+
+// exercise schema
 export const exerciseSchema = new mongoose.Schema({
     exerciseId: { type: String, required: true, unique: true }, // unique ID for the exercise
     title: { type: String, required: true }, // name of the exercise
@@ -56,6 +58,7 @@ export const workoutSchema = new mongoose.Schema({
     supersets: { type: [supersetSchema], required: true },
     totalTime: { type: Number, required: true },
     workoutTime: { type: Number, required: true },
+    isSaved: { type: Boolean, default: false },
     isSaved: { type: Boolean, default: false },
 }, { timestamps: true });
 
