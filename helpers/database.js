@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import logger from '../utils/logger.js';
+import logger from '../helpers/logger.js';
 
 export const initializeDb = async () => {
     const mongoUri = process.env.MONGO_URI || 'mongodb://localhost:27017/userDatabase';

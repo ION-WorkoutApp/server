@@ -6,9 +6,11 @@ import authRoutes from './routes/authRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import exerciseRoutes from './routes/exerciseRoutes.js';
 import workoutRoutes from './routes/workoutRoutes.js';
+import userDataRoutes from './routes/exporters.js'
 import testingRoutes from './routes/testing.js';
 import genericRoutes from './routes/generic.js';
 import { checkFetchAndImport } from './functions/importCSV.js';
+import { checkForExpiredDocuments } from './exporters/uploader.js';
 
 
 // load secret key
@@ -28,6 +30,9 @@ async function initializeDb() {
     try {
         await mongoose.connect(mongoUri);
         logger.info('Connected to MongoDB');
+
+        checkForExpiredDocuments();
+        logger.info('Started expired docs scanner');
     } catch (err) {
         logger.error('Failed to connect to MongoDB:', err);
         process.exit(1);
@@ -46,20 +51,22 @@ app.head('/', async (_, res) => {
 
 app.head('/isindebugmode', (_, res) => res.send(process.env.DEBUGGING ? true : false));
 
+
 // mount routes
 app.use('/auth', authRoutes);
-app.use('/users', userRoutes); // Scoped to `/users`
-app.use('/exercises', exerciseRoutes); // Scoped to `/exercises`
-app.use('/workouts', workoutRoutes); // Scoped to `/workouts`
-app.use('/', genericRoutes); // Generic routes remain on `/`
+app.use('/users', userRoutes);
+app.use('/exercises', exerciseRoutes);
+app.use('/udata', userDataRoutes);
+app.use('/workouts', workoutRoutes);
 app.use('/test', testingRoutes); // This has a debug check in the router
+app.use('/', genericRoutes); // Generic routes on `/`
 
 
 // start the server
 app.listen(PORT, async () => {
     (await import('dns')).lookup((await import('os')).hostname(), { family: 4 }, (err, addr) => {
         if (!err) {
-            logger.debug(`Server is running on http://${addr}:${PORT}`);
+            logger.info(`Server is running on http://${addr}:${PORT}`);
         }
     });
 });

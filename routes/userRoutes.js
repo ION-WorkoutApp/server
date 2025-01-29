@@ -21,7 +21,7 @@ router.post('/logout', async (req, res) => {
 // route to get account details (protected)
 router.get('/userdata', async (req, res) => {
     try {
-        const user = await User.findOne({ email: req.user.email });
+        const user = await User.findOne({ email: req.user.email }).lean();
         if (user) {
             res.json(user);
         } else {

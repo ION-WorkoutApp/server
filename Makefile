@@ -11,7 +11,7 @@ moveLogs:
 
 run: moveLogs
 	docker compose up -d
-	@pgrep -a cloudflared || cloudflared tunnel run test &> logs/cloudflared.log &
+	cloudflared tunnel run test &> logs/cloudflared.log &
 	docker compose logs -f > logs/docker.log &
 
 dockerSystemReset:
