@@ -5,3 +5,4 @@ temp.*
 logs/
 .logs_old/
 node_modules/
+notfound.txt

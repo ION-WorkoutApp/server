@@ -11,6 +11,7 @@ export const exerciseSchema = new mongoose.Schema({
     equipment: { type: String, required: true }, // equipment used
     level: { type: String, required: true }, // difficulty level
     timeBased: { type: Boolean, required: true }, // indicates if the exercise is time-based
+    perSide: { type: Boolean, required: true }, // indicates if the exercise is time-based
     rating: { type: Number, default: 0 }, // numeric rating
     ratingDescription: { type: String }, // description of the rating
     videoPath: { type: String }, // path to the exercise video

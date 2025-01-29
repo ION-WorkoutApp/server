@@ -92,10 +92,10 @@ const importCSV = async (CSV_FILE_PATH) => {
             fs.createReadStream(CSV_FILE_PATH)
                 .pipe(csvParser())
                 .on('data', function (row) {
-                    if (!row['']) fs.appendFileSync('notfound.txt', JSON.stringify(row) + '\n');
+                    if (!row['Id']) fs.appendFileSync('notfound.txt', JSON.stringify(row) + '\n');
 
                     exercises.push({
-                        exerciseId: row[''],
+                        exerciseId: row['Id'],
                         title: row['Title'],
                         description: row['Desc'] || "N/A",
                         type: row['Type'] || "N/A",
@@ -103,6 +103,7 @@ const importCSV = async (CSV_FILE_PATH) => {
                         equipment: row['Equipment'] || "N/A",
                         level: row['Level'] || "N/A",
                         timeBased: (row['timeBased'] == 'True'),
+                        perSide: (row['perside'] == 'True'),
                         rating: row['Rating'] ? parseFloat(row['Rating']) : 0,
                         ratingDescription: row['RatingDesc'] || "N/A",
                         videoPath: '', // empty for now
