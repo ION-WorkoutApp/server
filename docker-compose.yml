@@ -5,10 +5,15 @@ services:
     restart: always
     ports:
       - "27017:27017"
+    ulimits:
+      nofile:
+        soft: 64000
+        hard: 64000
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
       MONGO_INITDB_DATABASE: ${MONGO_DATABASE}
+      GLIBC_TUNABLES: glibc.pthread.rseq=0        # tcmalloc does not fully support rseq (help)
     volumes:
       - ./data/mongodb_data:/data/db
 

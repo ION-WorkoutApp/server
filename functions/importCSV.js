@@ -102,7 +102,7 @@ const importCSV = async (CSV_FILE_PATH) => {
                         bodyPart: row['BodyPart'] || "N/A",
                         equipment: row['Equipment'] || "N/A",
                         level: row['Level'] || "N/A",
-                        timeBased: (row['timeBased'] == 'True'),
+                        measureType: row['measure'] || "reps",
                         perSide: (row['perside'] == 'True'),
                         rating: row['Rating'] ? parseFloat(row['Rating']) : 0,
                         ratingDescription: row['RatingDesc'] || "N/A",

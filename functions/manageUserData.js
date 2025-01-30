@@ -33,13 +33,13 @@ async function validateWorkoutData(workoutRaw, workoutName = '') {
                             throw new Error(`Exercise with ID ${exerciseInstance.exercise.exerciseId} not found.`);
                         }
 
-                        // Map reps, times, and weight using the metricSchema structure
                         const mapMetrics = (metrics) => {
                             return metrics.map(metric => ({
                                 id: metric.id,
                                 isDone: metric.isDone || false,
                                 restTime: metric.restTime || 0,
-                                value: metric.value || 0
+                                value: metric.value || 0,
+                                distance: metric.distance || null
                             }));
                         };
 
@@ -47,9 +47,9 @@ async function validateWorkoutData(workoutRaw, workoutName = '') {
                             exercise: exercise._id, // Reference to the Exercise document
                             id: exerciseInstance.id || new mongoose.Types.ObjectId(),
                             isDone: exerciseInstance.isDone || false,
-                            reps: mapMetrics(exerciseInstance.reps || []),
-                            times: mapMetrics(exerciseInstance.times || []),
+                            inset: mapMetrics(exerciseInstance.inset || []),
                             weight: mapMetrics(exerciseInstance.weight || []),
+                            measureType: exerciseInstance.measure || 0,
                             restTime: exerciseInstance.restTime || 0,
                             sets: exerciseInstance.sets || 1,
                             setsDone: exerciseInstance.setsDone || 0,

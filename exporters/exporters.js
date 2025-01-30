@@ -198,20 +198,35 @@ export const exportUserWorkoutsToICS = async (email, outputPath) => {
                 superset.exercises.forEach((exInst, exIndex) => {
                     descriptionLines.push(`    Exercise ${exIndex + 1}: ${exInst.exercise.title}`);
                     descriptionLines.push(`      Description: ${exInst.exercise.description}`);
-                    descriptionLines.push(`      Type: ${exInst.exercise.type}`);
+                    descriptionLines.push(`      Type: ${exInst.exercise.type} (measured in ${exInst.exercise.measureType})`);
                     descriptionLines.push(`      Body Part: ${exInst.exercise.bodyPart}`);
                     descriptionLines.push(`      Equipment: ${exInst.exercise.equipment}`);
                     descriptionLines.push(`      Level: ${exInst.exercise.level}`);
-                    descriptionLines.push(`      Time Based: ${exInst.exercise.timeBased}`);
                     descriptionLines.push(`      Per Side: ${exInst.exercise.perSide}`);
                     if (exInst.exercise.rating !== undefined) {
                         descriptionLines.push(`      Rating: ${exInst.exercise.rating}`);
                     }
                     descriptionLines.push(`      Sets: ${exInst.sets}`);
                     descriptionLines.push(`      Sets Done: ${exInst.setsDone}`);
-                    descriptionLines.push(`      Reps: ${exInst.reps.join(', ')}`);
-                    descriptionLines.push(`      Times: ${exInst.times.join(', ')}`);
-                    descriptionLines.push(`      Weight: ${exInst.weight.join(', ')}`);
+                    
+                    switch (exInst.exercise.measure) {
+                        case 0: 
+                            descriptionLines.push(`      Reps: ${exInst.inset.join(', ')}`);
+                            break;
+                            
+                        case 1: 
+                            descriptionLines.push(`      Times: ${exInst.inset.join(', ')}`);
+                            break;      
+
+                        case 2: 
+                            descriptionLines.push(`      Distances: ${exInst.inset.join(', ')}`);
+                            break;
+                    
+                        default:
+                            break;
+                    }
+                    
+                    descriptionLines.push(`      Weight: ${exInst.join(', ')}`);
                     descriptionLines.push(`      Rest Time: ${exInst.restTime} minutes`);
                 });
             });

@@ -14,6 +14,11 @@ run: moveLogs
 	cloudflared tunnel run test &> logs/cloudflared.log &
 	docker compose logs -f > logs/docker.log &
 
+setup:
+	make run
+	make fixPermissions
+	make restart
+
 dockerSystemReset:
 	make stop
 	docker image prune -a -f

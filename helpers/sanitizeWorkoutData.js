@@ -18,11 +18,10 @@ export const sanitizeWorkouts = (workouts) => {
             const sanitizedExercises = exercises.map(exInst => {
                 const { 
                     id: exId,
-                    reps,
-                    times,
+                    inset,
                     weight,
                     exercise,
-                    ...restExerciseInstance 
+                    ..._ 
                 } = exInst;
 
                 return {
@@ -31,8 +30,8 @@ export const sanitizeWorkouts = (workouts) => {
                     customExercise: exInst.customExercise,
                     sets: exInst.sets,
                     setsDone: exInst.setsDone,
-                    reps: reps.map(rep => rep.value),
-                    times: times.map(time => time.value),
+                    inset: inset.map(i => i.value),
+                    distances: (inset.at(0)?.distance) ? inset.map(i => i.distance) : null,
                     weight: weight.map(w => w.value),
                     restTime: exInst.restTime,
                 };

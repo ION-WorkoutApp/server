@@ -12,7 +12,7 @@ export const exerciseSchema = new mongoose.Schema({
     bodyPart: { type: String, required: true }, // targeted body part
     equipment: { type: String, required: true }, // equipment used
     level: { type: String, required: true }, // difficulty level
-    timeBased: { type: Boolean, required: true }, // indicates if the exercise is time-based
+    measureType: { type: Number, required: true }, // indicates if the exercise is time-based
     perSide: { type: Boolean, required: true }, // indicates if the exercise is time-based
     rating: { type: Number, default: 0 }, // numeric rating
     ratingDescription: { type: String }, // description of the rating
@@ -25,6 +25,7 @@ const metricSchema = new mongoose.Schema({
     id: { type: String, required: true },
     isDone: { type: Boolean, default: false },
     restTime: { type: Number, default: 0 },
+    distance: { type: Number, default: null, required: false },
     value: { type: Number, default: 0 },
 }, { _id: false });
 
@@ -33,8 +34,7 @@ const exerciseInstanceSchema = new mongoose.Schema({
     exercise: { type: mongoose.Schema.Types.ObjectId, ref: 'Exercise', required: true },
     id: { type: String, required: true }, // unique identifier for the instance
     isDone: { type: Boolean, default: false },
-    reps: { type: [metricSchema], default: [] },
-    times: { type: [metricSchema], default: [] },
+    inset: { type: [metricSchema], default: [] },
     weight: { type: [metricSchema], default: [] },
     restTime: { type: Number, default: 0 },
     sets: { type: Number, default: 1 },
