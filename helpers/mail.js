@@ -15,7 +15,7 @@ const transporter = nodemailer.createTransport({
 export default async function sendEmail(to, subject, text) {
     try {
         const mailOptions = {
-            from: process.env.EMAIL_USER,
+            from: process.env.EMAIL_SENDER,
             to,
             subject,
             text,
