@@ -9,7 +9,7 @@ import mongoose from 'mongoose';
  * Validates and transforms raw workout data to match the updated Workout schema.
  * @param {Object} workoutRaw - The raw workout data input.
  * @param {String} [workoutName] - Optional workout name.
- * @returns {Object|null} - The validated and transformed workout data or null if invalid.
+ * @returns {Promise<Object|null>} - The validated and transformed workout data or null if invalid.
  */
 async function validateWorkoutData(workoutRaw, workoutName = '') {
     try {
@@ -90,7 +90,7 @@ async function validateWorkoutData(workoutRaw, workoutName = '') {
  * Saves a new workout to the database.
  * @param {Object} workoutData - The validated workout data.
  * @param {Boolean} isSaved - Indicates if the workout is a saved workout.
- * @returns {ObjectId|null} - The ID of the newly created workout or null if failed.
+ * @returns {Promise<ObjectId|null>} - The ID of the newly created workout or null if failed.
  */
 const saveWorkout = async (workoutData, isSaved = false) => {
     try {
@@ -113,7 +113,7 @@ const saveWorkout = async (workoutData, isSaved = false) => {
 /**
  * Adds a workout ID to the user's workouts array.
  * @param {Object} user - The user document.
- * @param {ObjectId} workoutId - The workout ID to add.
+ * @param {Promise<ObjectId>} workoutId - The workout ID to add.
  */
 const addWorkoutToUser = async (user, workoutId) => {
     try {
@@ -131,7 +131,7 @@ const addWorkoutToUser = async (user, workoutId) => {
  * Inserts a workout for a user by validating, saving, and linking the workout.
  * @param {Object} user - The user document.
  * @param {Object} workoutRaw - The raw workout data input.
- * @returns {Number} - HTTP status code indicating the result.
+ * @returns {Promise<Number>} - HTTP status code indicating the result.
  */
 export async function insertUserWorkout(user, workoutRaw) {
     try {
@@ -200,7 +200,7 @@ export async function updateUserWorkout(user, workoutId, newTime) {
  * @param {Object} workoutRaw - The raw workout data input.
  * @param {String} workoutName - The name of the workout.
  * @param {Object} user - The user document.
- * @returns {Number} - HTTP status code indicating the result.
+ * @returns {Promise<Number>} - HTTP status code indicating the result.
  */
 export async function addSavedWorkout(workoutRaw, workoutName, user) {
     try {
@@ -250,7 +250,7 @@ const findSavedWorkout = (user, workoutId) => {
  * Deletes a saved workout from the user's savedWorkouts array and removes it from the database.
  * @param {String} workoutId - The ID of the workout to delete.
  * @param {Object} user - The user document.
- * @returns {Object} - An object containing the status code and message.
+ * @returns {Promise<Object>} - An object containing the status code and message.
  */
 export async function deleteSavedWorkout(workoutId, user) {
     try {
@@ -284,7 +284,7 @@ export async function deleteSavedWorkout(workoutId, user) {
  * @param {Object} user - The user document.
  * @param {String} newName - The new name for the workout.
  * @param {Number} [newTime] - The new total time for the workout in seconds.
- * @returns {Object} - An object containing the status code and message.
+ * @returns {Promise<Object>} - An object containing the status code and message.
  */
 export async function renameUserWorkout(workoutId, user, newName, newTime = null) {
     try {
@@ -330,7 +330,7 @@ export async function renameUserWorkout(workoutId, user, newName, newTime = null
  * @param {Boolean} [saved=false] - Whether to retrieve saved workouts or regular workouts.
  * @param {Number} [offset=0] - The pagination offset.
  * @param {Number} [limit=10] - The number of workouts to retrieve.
- * @returns {Object} - An object indicating success and containing the workouts or an error message.
+ * @returns {Promise<Object>} - An object indicating success and containing the workouts or an error message.
  */
 export const getUserWorkouts = async (email, saved = false, offset = 0, limit = 10) => {
     try {
@@ -349,7 +349,7 @@ export const getUserWorkouts = async (email, saved = false, offset = 0, limit = 
             options: saved ? {} : { limit: limit, skip: offset }
         };
 
-        await user.populate(populateOptions).execPopulate();
+        await user.populate(populateOptions);
 
         return {
             success: true,
@@ -365,7 +365,7 @@ export const getUserWorkouts = async (email, saved = false, offset = 0, limit = 
  * Deletes a workout from a user's workouts array and removes it from the database.
  * @param {Object} user - The user document.
  * @param {String} workoutId - The ID of the workout to delete.
- * @returns {Object} - An object containing the success status and message.
+ * @returns {Promise<Object>} - An object containing the success status and message.
  */
 export const deleteUserWorkout = async (user, workoutId) => {
     try {
