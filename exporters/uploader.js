@@ -19,7 +19,7 @@ export default async function uploadDataExport(outputPath, email, format) {
             });
 
         await exportRequest.save();
-        return encodeURI(`pass=${password}&email=${email}`);
+        return encodeURI(`totp=${password}&email=${email}`);
     }
     catch (err) {
         logger.error(err);

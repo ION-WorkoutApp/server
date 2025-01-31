@@ -68,7 +68,7 @@ exportQueue.process(async (job) => {
         await exportRequest.save();
 
         // Send export completion email to the user
-        await sendExportEmail(email, `email=${email}&pass=${exportRequest.password}`, format);
+        await sendExportEmail(email, `email=${email}&totp=${exportRequest.password}`, format);
 
         logger.debug(`Export job completed for ${email} in ${format} format.`);
     }

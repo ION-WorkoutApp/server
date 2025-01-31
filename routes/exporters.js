@@ -103,16 +103,16 @@ router.get('/canrequest', async (req, res) => {
  */
 router.get('/download', async (req, res) => {
 	try {
-		const { pass, email } = req.query;
+		const { totp, email } = req.query;
 
-		if (!pass) return res.status(400).send('Missing required query parameter "pass"');
+		if (!totp) return res.status(400).send('Missing required query parameter "totp"');
 		if (!email) return res.status(400).send('Missing required query parameter "email"');
 
 		const user = await User.findOne({ email });
 		if (!user) return res.status(404).send('User not found');
 
 		// Find the ExportRequest with matching user and password
-		const exportRequest = await ExportRequest.findOne({ user: user._id, password: pass });
+		const exportRequest = await ExportRequest.findOne({ user: user._id, password: totp });
 
 		if (!exportRequest) return res.status(403).send('Invalid password or export request not found');
 		else if (exportRequest.status !== 'completed') {
