@@ -8,7 +8,6 @@ const router = express.Router();
 router.use(verifyToken);
 
 
-// route to log out (protected)
 router.post('/logout', async (req, res) => {
     try {
         await User.findOneAndUpdate({ _id: req.user.id }, { $unset: { refreshToken: 1 } });
@@ -18,7 +17,7 @@ router.post('/logout', async (req, res) => {
     }
 });
 
-// route to get account details (protected)
+
 router.get('/userdata', async (req, res) => {
     try {
         const user = await User.findOne({ email: req.user.email }).lean();
@@ -32,14 +31,17 @@ router.get('/userdata', async (req, res) => {
     }
 });
 
-// route to update account details (protected)
+
 router.put('/updatedetails', async (req, res) => {
     try {
+        // Validate the incoming data here?
+
+        // Perform the update
         const updatedUser = await User.findOneAndUpdate(
             { email: req.user.email },
-            { $set: req.body },
-            { new: true }
-        );
+            { $set: req.body }, // This allows updating nested fields
+            { new: true, runValidators: true } // Return the updated document
+        ).lean();
 
         if (updatedUser) {
             res.json({
@@ -57,7 +59,8 @@ router.put('/updatedetails', async (req, res) => {
     }
 });
 
-// route to delete account (protected)
+
+
 router.delete('/deleteaccount', async (req, res) => {
     try {
         const result = await User.deleteOne({ email: req.user.email });

@@ -11,6 +11,7 @@ import testingRoutes from './routes/testing.js';
 import genericRoutes from './routes/generic.js';
 import { checkFetchAndImport } from './functions/importCSV.js';
 import { checkForExpiredDocuments } from './exporters/uploader.js';
+import limiter from './helpers/rateLimit.js';
 
 
 // load secret key
@@ -23,6 +24,7 @@ const PORT = process.env.PORT || 1221;
 app.use(express.raw());
 app.use(express.json());
 app.use(cors());
+app.use(limiter);
 
 // connect to mongodb
 async function initializeDb() {

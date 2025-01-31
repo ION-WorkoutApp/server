@@ -2,8 +2,10 @@ import express from 'express';
 import jwt from 'jsonwebtoken';
 import { validateEmail } from '../validators/email.js';
 import { User } from '../models/userSchema.js';
+import { authLimiter } from '../helpers/rateLimit.js';
 
 const router = express.Router();
+router.use(authLimiter);
 const SECRET_KEY = process.env.SECRET_KEY || 'myverysecretkey1';
 
 
