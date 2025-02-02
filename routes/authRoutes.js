@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import { validateEmail } from '../validators/email.js';
 import { User } from '../models/userSchema.js';
 import { authLimiter } from '../helpers/rateLimit.js';
+import logger from '../helpers/logger.js'
 
 const router = express.Router();
 router.use(authLimiter);
@@ -12,19 +13,7 @@ const SECRET_KEY = process.env.SECRET_KEY || 'myverysecretkey1';
 // route to initialize account
 router.post('/initaccount', async (req, res) => {
     try {
-        const {
-            name, email, password, age, gender,
-            height, weight, fitnessGoal, preferredWorkoutType,
-            comfortLevel
-        } = req.body;
-
-        if (
-            !name || !email || !password || !age || !gender ||
-            !height || !weight || !fitnessGoal || !preferredWorkoutType ||
-            !comfortLevel
-        ) {
-            return res.status(400).json({ message: 'Bad request. Missing required fields.' });
-        }
+        const { email } = req.body;
 
         // validate email
         if (!(await validateEmail(email))) return res.sendStatus(403);
@@ -34,10 +23,7 @@ router.post('/initaccount', async (req, res) => {
         if (existingUser) return res.sendStatus(409); // conflict
 
         // create new user
-        const user = new User({
-            name, email, password, age, gender, height, weight,
-            fitnessGoal, preferredWorkoutType, comfortLevel
-        });
+        const user = new User(req.body);
         await user.save();
 
         res.status(200).json({
@@ -45,12 +31,15 @@ router.post('/initaccount', async (req, res) => {
             uid: user._id
         });
     } catch (err) {
+        logger.error(err);
+
         res.status(500).json({
             message: 'Failed to initialize account',
             error: err.message
         });
     }
 });
+
 
 // route to check credentials and issue a token (this is the login route)
 router.post('/checkcredentials', async (req, res) => {
@@ -82,12 +71,15 @@ router.post('/checkcredentials', async (req, res) => {
             refreshToken
         });
     } catch (err) {
+        logger.error(err);
+
         res.status(500).json({
             message: 'Failed to check credentials',
             error: err.message
         });
     }
 });
+
 
 // route to refresh token
 router.post('/refresh-token', async (req, res) => {
@@ -114,12 +106,15 @@ router.post('/refresh-token', async (req, res) => {
 
         res.json({ token: newToken });
     } catch (err) {
+        logger.error(err);
+
         res.status(403).json({
             message: 'Invalid or expired refresh token',
             error: err.message
         });
     }
 });
+
 
 // route to log out and revoke refresh token
 export default router;

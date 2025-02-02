@@ -106,6 +106,7 @@ const importCSV = async (CSV_FILE_PATH) => {
                         perSide: (row['perside'] == 'True'),
                         rating: row['Rating'] ? parseFloat(row['Rating']) : 0,
                         ratingDescription: row['RatingDesc'] || "N/A",
+                        met: row['met'] ? parseFloat(row['met']) : 0,
                         videoPath: '', // empty for now
                     });
 

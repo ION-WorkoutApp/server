@@ -8,11 +8,9 @@ Make sure you wouldn't rather use one of the [installers](https://github.com/ION
 
 1. clone this repo
 2. create the ENV file (see the **Environment** section below)
-3. run `make run`
-4. run `make fixPermissions`
-5. run `make restart`
+3. run `make setup`
 
-*Why `make fixPermissions`? Because mongodb does funny things with permissions then can't read it's own data directory*
+*Why does `make setup` run `make fixPermissions`? Because mongodb does funny things with permissions then can't read it's own data directory*
 
 
 # Environment

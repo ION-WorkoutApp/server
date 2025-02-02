@@ -6,6 +6,7 @@ export const sanitizeWorkouts = (workouts) => {
             isSaved,
             createdAt,
             updatedAt,
+            calories,
             ...restWorkout
         } = workout;
 
@@ -21,6 +22,7 @@ export const sanitizeWorkouts = (workouts) => {
                     inset,
                     weight,
                     exercise,
+                    calories,
                     ..._ 
                 } = exInst;
 
@@ -34,6 +36,7 @@ export const sanitizeWorkouts = (workouts) => {
                     distances: (inset.at(0)?.distance) ? inset.map(i => i.distance) : null,
                     weight: weight.map(w => w.value),
                     restTime: exInst.restTime,
+                    calories
                 };
             });
 
@@ -41,6 +44,7 @@ export const sanitizeWorkouts = (workouts) => {
                 uid: superset.uid,
                 restTime: superset.restTime,
                 exercises: sanitizedExercises,
+                calories
             };
         });
 
@@ -53,6 +57,7 @@ export const sanitizeWorkouts = (workouts) => {
             supersets: sanitizedSupersets,
             createdAt,
             updatedAt,
+            calories
         };
     });
 };

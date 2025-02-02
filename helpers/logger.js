@@ -1,6 +1,6 @@
 import { createLogger, format, transports } from 'winston';
 
-export default createLogger({
+const logger = createLogger({
     level: 'debug',
     format: format.combine(
         format.timestamp(),
@@ -23,3 +23,5 @@ export default createLogger({
         })
     ]
 });
+
+export default logger;

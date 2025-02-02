@@ -2,8 +2,6 @@ import mongoose from 'mongoose';
 
 
 // exercise schema
-
-// exercise schema
 export const exerciseSchema = new mongoose.Schema({
     exerciseId: { type: String, required: true, unique: true }, // unique ID for the exercise
     title: { type: String, required: true }, // name of the exercise
@@ -16,6 +14,7 @@ export const exerciseSchema = new mongoose.Schema({
     perSide: { type: Boolean, required: true }, // indicates if the exercise is time-based
     rating: { type: Number, default: 0 }, // numeric rating
     ratingDescription: { type: String }, // description of the rating
+    met: { type: String },
     videoPath: { type: String }, // path to the exercise video
 }, { timestamps: true }); // add createdAt and updatedAt timestamps
 
@@ -29,6 +28,7 @@ const metricSchema = new mongoose.Schema({
     value: { type: Number, default: 0 },
 }, { _id: false });
 
+
 // exercise instance schema
 const exerciseInstanceSchema = new mongoose.Schema({
     exercise: { type: mongoose.Schema.Types.ObjectId, ref: 'Exercise', required: true },
@@ -39,6 +39,8 @@ const exerciseInstanceSchema = new mongoose.Schema({
     restTime: { type: Number, default: 0 },
     sets: { type: Number, default: 1 },
     setsDone: { type: Number, default: 0 },
+    calories: { type: Number, default: 0 },
+    duration: { type: Number, default: 0 }
 }, { _id: false });
 
 
@@ -60,6 +62,7 @@ export const workoutSchema = new mongoose.Schema({
     workoutTime: { type: Number, required: true },
     isSaved: { type: Boolean, default: false },
     isSaved: { type: Boolean, default: false },
+    calories: { type: Number, default: 0 }
 }, { timestamps: true });
 
 
