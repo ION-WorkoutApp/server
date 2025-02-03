@@ -16,11 +16,11 @@ router.post('/initaccount', async (req, res) => {
         const { email } = req.body;
 
         // validate email
-        if (!(await validateEmail(email))) return res.sendStatus(403);
+        if (!(await validateEmail(email))) return res.status(403).json({ error: `unallowed email used (${email})` });
 
         // check for existing user
         const existingUser = await User.findOne({ email });
-        if (existingUser) return res.sendStatus(409); // conflict
+        if (existingUser) return res.status(409).json({ error: `email "${email}" already in use` }); // conflict
 
         // create new user
         const user = new User(req.body);

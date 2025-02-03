@@ -19,6 +19,7 @@ const limiter = rateLimit({
     },
     standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
     legacyHeaders: false,  // Disable the `X-RateLimit-*` headers
+    xForwardedForHeader: false // deal with error (see https://express-rate-limit.mintlify.app/reference/error-codes#err-erl-unexpected-x-forwarded-for)
 });
 
 
