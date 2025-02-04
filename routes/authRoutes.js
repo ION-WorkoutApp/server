@@ -1,26 +1,100 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
+import { createClient } from 'redis';
 import { validateEmail } from '../validators/email.js';
 import { User } from '../models/userSchema.js';
 import { authLimiter } from '../helpers/rateLimit.js';
 import logger from '../helpers/logger.js'
+import sendEmail from '../helpers/mail.js';
+import validateConfCode from '../helpers/validateConfCode.js';
+import UsedEmails from '../models/UsedEmails.js';
 
 const router = express.Router();
 router.use(authLimiter);
 const SECRET_KEY = process.env.SECRET_KEY || 'myverysecretkey1';
 
+// redis[s]://[[username][:password]@][host][:port][/db-number]
+const redisClient = createClient({
+    url: `redis://${process.env.REDIS_HOST || 'redis'}:${Number(process.env.REDIS_PORT) || 6379}`
+});
+
+redisClient.on('error', (err) => console.error('redis error:', err));
+await redisClient.connect();
+
+
+// abstraction to check lists
+// NOTE: if you ever implement free trials, comment the blacklist back in to prevent spoofing
+const validateUser = async (email) => {
+    if (await User.findOne({ email })) return false
+    // else if (await UsedEmails.findOne({ email })) return false;
+    else return true;
+}
+
+
+// region codes
+
+router.post('/gencode', async (req, res) => {
+    try {
+        const { email } = req.body;
+        if (!email) {
+            return res.status(400).json({ error: 'email is required' });
+        }
+        else if (!(await validateEmail(email))) return res.status(403).json({ error: `unallowed email used (${email})` });
+        else if (!(await validateUser(email))) return res.status(409).json({ error: `email "${email}" already in use` });
+
+        // random 6-digit confirmation code
+        const confirmationCode = Math.floor(100000 + Math.random() * 900000).toString();
+
+        //10-minute expiry (600 seconds)
+        await redisClient.set(`confirmation:${email}`, confirmationCode, { EX: 600 });
+        await redisClient.del(`attempts:${email}`);
+
+        await sendEmail(email, `Your ION Workout App Code`, `Your ION Workout App Code is ${confirmationCode}\n\nIf you did not request this code, it is safe to ignore this email`)
+        
+        logger.debug(`account creation confirmation email sent to ${email}`);
+
+        res.sendStatus(200);
+    }
+    catch (err) {
+        console.error(err);
+        res.sendStatus(500);
+    }
+});
+
+router.post('/testcode', async (req, res) => {
+    try {
+        const { email, code } = req.body;
+
+        // validate email
+        if (!email || !code) return res.status(400).send('code and email are required');
+        if (!(await validateEmail(email))) return res.status(403).json({ error: `unallowed email used (${email})` });
+
+        const r = await validateConfCode(res, redisClient, email, code, false);
+        if (r) res.sendStatus(200);
+    }
+    catch(err) {
+        console.error(err);
+        res.sendStatus(500);
+    }
+});
+
+// endregion
+
 
 // route to initialize account
 router.post('/initaccount', async (req, res) => {
     try {
-        const { email } = req.body;
+        const { email, code } = req.body;
 
         // validate email
+        if (!email || !code) return res.status(400).send('code and email are required');
         if (!(await validateEmail(email))) return res.status(403).json({ error: `unallowed email used (${email})` });
 
+        const r = await validateConfCode(res, redisClient, email, code);
+        if (!r) return;
+        
         // check for existing user
-        const existingUser = await User.findOne({ email });
-        if (existingUser) return res.status(409).json({ error: `email "${email}" already in use` }); // conflict
+        if (!(await validateUser(email))) return res.status(409).json({ error: `email "${email}" already in use` }); // conflict
 
         // create new user
         const user = new User(req.body);

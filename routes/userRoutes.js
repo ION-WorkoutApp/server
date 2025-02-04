@@ -60,7 +60,7 @@ router.put('/updatedetails', async (req, res) => {
 });
 
 
-
+// TODO: Add email to list so the user can't spoof free trials
 router.delete('/deleteaccount', async (req, res) => {
     try {
         const result = await User.deleteOne({ email: req.user.email });
