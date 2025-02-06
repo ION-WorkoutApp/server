@@ -53,6 +53,14 @@ services:
       - .:/usr/src/app # Mount local files for development purposes
       - ./data/exports:/exports
 
+  admin-portal:
+    build:
+      context: ../admin-portal
+      dockerfile: Dockerfile
+    ports:
+      - "1122:80"
+    restart: always
+
 volumes:
   mongodb_data:
   redis_data:

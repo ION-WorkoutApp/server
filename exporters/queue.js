@@ -1,10 +1,11 @@
 import Bull from 'bull';
 import crypto from 'crypto';
 import path from 'path';
-import { exportUserDataToCSV, exportUserDataToJSON, exportUserWorkoutsToICS } from './exporters.js';
+import { exportUserDataToJSON, exportUserWorkoutsToICS } from './exporters.js';
 import { sendExportEmail } from './mailHandler.js';
 import ExportRequest from '../models/exportSchema.js';
 import logger from '../helpers/logger.js';
+import { exportUserDataXLSX } from './toXLSX.js';
 
 const exportQueue = new Bull('exportQueue', {
     redis: {
@@ -43,8 +44,8 @@ exportQueue.process(async (job) => {
 
         switch (format) {
             case 'csv':
-                outputPath = path.join('/exports', `${fname}_data.csv`);
-                exportFunction = exportUserDataToCSV;
+                outputPath = path.join('/exports', `${fname}_data.xlsx`);
+                exportFunction = exportUserDataXLSX;
                 break;
             case 'json':
                 outputPath = path.join('/exports', `${fname}_data.json`);

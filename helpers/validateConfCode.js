@@ -1,8 +1,14 @@
+import logger from "./logger.js";
 
 /**
  * @returns false if failed, but it will send the error for you
  */
 export default async function validateConfCode(res, redisClient, email, code, removeCodeOnTrue = true) {
+	if (process.env.DEBUGGING) {
+		logger.info('bypassing conf code due to process.env.DEBUGGING being set');
+		return true
+	}
+
     const storedCode = await redisClient.get(`confirmation:${email}`);
 
     if (storedCode !== code) {
@@ -28,7 +34,6 @@ export default async function validateConfCode(res, redisClient, email, code, re
     } else {
         if (!removeCodeOnTrue) return true;
 
-        // correct code: remove confirmation code and attempts counter
         await redisClient.del(`confirmation:${email}`);
         await redisClient.del(`attempts:${email}`);
         return true;
