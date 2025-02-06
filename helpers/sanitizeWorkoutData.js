@@ -1,7 +1,6 @@
-export const sanitizeWorkouts = (workouts) => {
+export const sanitizeWorkouts = (workouts) => {	
     return workouts.map(workout => {
         const {
-            _id,
             supersets,
             isSaved,
             createdAt,
@@ -49,7 +48,7 @@ export const sanitizeWorkouts = (workouts) => {
         });
 
         return {
-            uid: workout.uid,
+            _id: workout._id,
             workoutName: restWorkout.workoutName,
             totalTime: restWorkout.totalTime,
             workoutTime: restWorkout.workoutTime,
