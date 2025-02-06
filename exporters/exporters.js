@@ -1,250 +1,182 @@
 import { User } from '../models/userSchema.js';
-import { Parser } from 'json2csv';
 import ical from 'ical-generator';
 import fs from 'fs/promises';
 import logger from '../helpers/logger.js';
 import { sanitizeWorkouts } from '../helpers/sanitizeWorkoutData.js';
 
 
-/**
- * Exports a user's data to a CSV file, including all necessary fields for import/export.
- *
- * @param {string} email - The email of the user to export data for.
- * @param {string} outputPath - The file path where the CSV will be saved.
- */
-export const exportUserDataToCSV = async (email, outputPath) => {
-    try {
-        const user = await User.findOne({ email })
-            .populate({
-                path: 'workouts',
-                populate: {
-                    path: 'supersets.exercises.exercise',
-                    select: '-__v -createdAt -updatedAt -videoPath -ratingDescription',
-                    model: 'Exercise',
-                },
-            })
-            .lean();
+// helper function to fetch a user and remove sensitive fields
+const fetchUserData = async (email) => {
+	const user = await User.findOne({ email })
+		.populate({
+			path: 'workouts',
+			model: 'Workout',
+			populate: [
+				{
+					// populate the supersets array
+					path: 'supersets',
+					populate: {
+						// populate each superset's exercises array
+						path: 'exercises',
+						populate: {
+							// populate the exercise in each exercise instance
+							path: 'exercise',
+							model: 'Exercise',
+							select: '-__v -createdAt -updatedAt -videoPath -ratingDescription',
+						},
+					},
+				},
+			],
+		}).lean();
 
-        if (!user) {
-            throw new Error(`User with email ${email} not found.`);
-        }
+	if (!user) {
+		throw new Error(`user with email ${email} not found.`);
+	}
 
-        const {
-            password,
-            refreshToken,
-            _id,
-            __v,
-            lastRequestedData,
-            savedWorkouts,
-            ...userData
-        } = user;
+	// destructure to remove sensitive/internal fields
+	const {
+		password,
+		refreshToken,
+		__v,
+		lastRequestedData,
+		savedWorkouts,
+		...userData
+	} = user;
 
-
-        const flattenedData = {
-            version: '1.0',
-            exportedBy: 'YourAppName',
-            email: userData.email,
-            name: userData.name,
-            age: userData.age,
-            gender: userData.gender,
-            height: userData.height,
-            weight: userData.weight,
-            weightUnit: userData.weightUnit,
-            fitnessGoal: userData.fitnessGoal,
-            preferredWorkoutType: userData.preferredWorkoutType,
-            comfortLevel: userData.comfortLevel,
-            workouts: JSON.stringify(sanitizeWorkouts(userData.workouts)), // serialize workouts as JSON
-            createdAt: userData.createdAt,
-            updatedAt: userData.updatedAt,
-        };
-
-        const json2csvParser = new Parser({ header: true });
-        const csv = json2csvParser.parse(flattenedData);
-
-        await fs.writeFile(outputPath, csv);
-        logger.debug(`CSV file successfully written to ${outputPath}`);
-    } catch (error) {
-        logger.error(`Error exporting user data to CSV: ${error.message}`);
-    }
+	return userData;
 };
 
 
-/**
- * Exports a user's data to a JSON file, including all necessary fields for import/export.
- *
- * @param {string} email - The email of the user to export data for.
- * @param {string} outputPath - The file path where the JSON will be saved.
- */
+// helper to build common export data with metadata
+const buildExportData = (userData, serializeWorkouts = true) => ({
+	version: '1.0',
+	exportedBy: 'YourAppName',
+	email: userData.email,
+	name: userData.name,
+	age: userData.age,
+	gender: userData.gender,
+	height: userData.height,
+	weight: userData.weight,
+	weightUnit: userData.weightUnit,
+	fitnessGoal: userData.fitnessGoal,
+	preferredWorkoutType: userData.preferredWorkoutType,
+	comfortLevel: userData.comfortLevel,
+	workouts: serializeWorkouts
+		? JSON.stringify(sanitizeWorkouts(userData.workouts))
+		: sanitizeWorkouts(userData.workouts),
+	createdAt: userData.createdAt,
+	updatedAt: userData.updatedAt,
+});
+
+
+// exports a user's data to json
 export const exportUserDataToJSON = async (email, outputPath) => {
-    try {
-        const user = await User.findOne({ email })
-            .populate({
-                path: 'workouts',
-                populate: {
-                    path: 'supersets.exercises.exercise',
-                    select: '-__v -createdAt -updatedAt -videoPath -ratingDescription',
-                    model: 'Exercise',
-                },
-            })
-            .lean();
-
-        if (!user) {
-            throw new Error(`User with email ${email} not found.`);
-        }
-
-        // Destructure to exclude sensitive and internal fields
-        const {
-            password,
-            refreshToken,
-            _id,
-            __v,
-            lastRequestedData,
-            savedWorkouts,
-            ...userData
-        } = user;
-
-
-        // Construct the final data object with metadata
-        const exportData = {
-            version: '1.0',
-            exportedBy: 'YourAppName',
-            email: userData.email,
-            name: userData.name,
-            age: userData.age,
-            gender: userData.gender,
-            height: userData.height,
-            weight: userData.weight,
-            weightUnit: userData.weightUnit,
-            fitnessGoal: userData.fitnessGoal,
-            preferredWorkoutType: userData.preferredWorkoutType,
-            comfortLevel: userData.comfortLevel,
-            workouts: sanitizeWorkouts(userData.workouts),
-            createdAt: userData.createdAt,
-            updatedAt: userData.updatedAt,
-        };
-
-        const jsonData = JSON.stringify(exportData, null, 2);
-
-        await fs.writeFile(outputPath, jsonData);
-        logger.debug(`JSON file successfully written to ${outputPath}`);
-    } catch (error) {
-        logger.error(`Error exporting user data to JSON: ${error.message}`);
-    }
+	try {
+		const userData = await fetchUserData(email);
+		const exportData = buildExportData(userData, false);
+		const jsonData = JSON.stringify(exportData, null, 2);
+		await fs.writeFile(outputPath, jsonData);
+		logger.err(`json file successfully written to ${outputPath}`);
+	} catch (err) {
+		console.log(err)
+	}
 };
 
 
-/**
- * Exports a user's workouts to an ICS (iCalendar) file, including all necessary fields for import/export.
- *
- * @param {string} email - The email of the user whose workouts to export.
- * @param {string} outputPath - The file path where the ICS will be saved.
- */
+// exports a user's workouts to an ics file
 export const exportUserWorkoutsToICS = async (email, outputPath) => {
-    try {
-        const user = await User.findOne({ email })
-            .populate({
-                path: 'workouts',
-                populate: {
-                    path: 'supersets.exercises.exercise',
-                    select: '-__v -createdAt -updatedAt -videoPath -ratingDescription',
-                    model: 'Exercise',
-                },
-            })
-            .lean();
+	try {
+		const userData = await fetchUserData(email);
+		if (!userData.workouts || userData.workouts.length === 0) {
+			logger.debug('no workouts found for the user.');
+			return;
+		}
+		const sanitizedWorkouts = sanitizeWorkouts(userData.workouts);
+		const cal = ical({ name: `${userData.name}'s workout schedule` });
 
-        if (!user) {
-            throw new Error(`User with email ${email} not found.`);
-        }
+		sanitizedWorkouts.forEach((workout) => {
+			// use _id from the workout document
+			const {
+				_id,
+				workoutName,
+				totalTime,
+				workoutTime,
+				restTime,
+				supersets,
+				createdAt,
+				updatedAt,
+			} = workout;
+			const startTime = new Date(createdAt);
+			const endTime = new Date(startTime.getTime() + workoutTime * 60000);
+			const descriptionLines = [
+				`workout id: ${_id.toString()}`,
+				`workout name: ${workoutName || 'unnamed workout'}`,
+				`total time: ${totalTime} minutes`,
+				`workout time: ${workoutTime} minutes`,
+				`rest time: ${restTime} minutes`,
+				`created at: ${new Date(createdAt).toISOString()}`,
+				`updated at: ${new Date(updatedAt).toISOString()}`,
+				'exercises:',
+			];
 
-        if (!user.workouts || user.workouts.length === 0) {
-            logger.debug('No workouts found for the user.');
-            return;
-        }
+			supersets.forEach((superset, supersetIndex) => {
+				descriptionLines.push(
+					`  superset ${supersetIndex + 1}: rest time - ${superset.restTime} minutes`
+				);
+				superset.exercises.forEach((exInst, exIndex) => {
+					descriptionLines.push(`    exercise ${exIndex + 1}: ${exInst.exercise.title}`);
+					descriptionLines.push(`      description: ${exInst.exercise.description}`);
+					descriptionLines.push(
+						`      type: ${exInst.exercise.type} (measured in ${exInst.exercise.measureType})`
+					);
+					descriptionLines.push(`      body part: ${exInst.exercise.bodyPart}`);
+					descriptionLines.push(`      equipment: ${exInst.exercise.equipment}`);
+					descriptionLines.push(`      level: ${exInst.exercise.level}`);
+					descriptionLines.push(`      per side: ${exInst.exercise.perSide}`);
+					if (exInst.exercise.rating !== undefined) {
+						descriptionLines.push(`      rating: ${exInst.exercise.rating}`);
+					}
+					descriptionLines.push(`      sets: ${exInst.sets}`);
+					descriptionLines.push(`      sets done: ${exInst.setsDone}`);
+					switch (exInst.exercise.measureType) {
+						case 0:
+							descriptionLines.push(
+								`      reps: ${exInst.inset.map(metric => metric.value).join(', ')}`
+							);
+							break;
+						case 1:
+							descriptionLines.push(
+								`      times: ${exInst.inset.map(metric => metric.value).join(', ')}`
+							);
+							break;
+						case 2:
+							descriptionLines.push(
+								`      distances: ${exInst.inset.map(metric => metric.value).join(', ')}`
+							);
+							break;
+						default:
+							break;
+					}
+					descriptionLines.push(
+						`      weight: ${exInst.weight.map(metric => metric.value).join(', ')}`
+					);
+					descriptionLines.push(`      rest time: ${exInst.restTime} minutes`);
+				});
+			});
 
-        const sanitizedWorkouts = sanitizeWorkouts(user.workouts),
-            cal = ical({ name: `${user.name}'s Workout Schedule` });
+			cal.createEvent({
+				start: startTime,
+				end: endTime,
+				summary: workoutName || 'unnamed workout',
+				description: descriptionLines.join('\n'),
+				location: 'gym', // placeholder location
+				uid: _id.toString(),
+			});
+		});
 
-        sanitizedWorkouts.forEach(workout => {
-            //only "useful for export" type of fields
-            const {
-                uid, // UUID
-                workoutName,
-                totalTime,
-                workoutTime,
-                restTime,
-                supersets,
-                createdAt,
-                updatedAt,
-            } = workout;
-
-            // Define start and end times
-            const startTime = new Date(createdAt),
-                endTime = new Date(startTime.getTime() + workoutTime * 60000); // workoutTime in minutes
-
-            // Construct description with relevant workout details
-            const descriptionLines = [
-                `Workout ID: ${uid}`, // Include UUID for import reference
-                `Workout Name: ${workoutName || 'Unnamed Workout'}`,
-                `Total Time: ${totalTime} minutes`,
-                `Workout Time: ${workoutTime} minutes`,
-                `Rest Time: ${restTime} minutes`,
-                `Created At: ${new Date(createdAt).toISOString()}`,
-                `Updated At: ${new Date(updatedAt).toISOString()}`,
-                'Exercises:',
-            ];
-
-            supersets.forEach((superset, supersetIndex) => {
-                descriptionLines.push(`  Superset ${supersetIndex + 1}: Rest Time - ${superset.restTime} minutes`);
-                superset.exercises.forEach((exInst, exIndex) => {
-                    descriptionLines.push(`    Exercise ${exIndex + 1}: ${exInst.exercise.title}`);
-                    descriptionLines.push(`      Description: ${exInst.exercise.description}`);
-                    descriptionLines.push(`      Type: ${exInst.exercise.type} (measured in ${exInst.exercise.measureType})`);
-                    descriptionLines.push(`      Body Part: ${exInst.exercise.bodyPart}`);
-                    descriptionLines.push(`      Equipment: ${exInst.exercise.equipment}`);
-                    descriptionLines.push(`      Level: ${exInst.exercise.level}`);
-                    descriptionLines.push(`      Per Side: ${exInst.exercise.perSide}`);
-                    if (exInst.exercise.rating !== undefined) {
-                        descriptionLines.push(`      Rating: ${exInst.exercise.rating}`);
-                    }
-                    descriptionLines.push(`      Sets: ${exInst.sets}`);
-                    descriptionLines.push(`      Sets Done: ${exInst.setsDone}`);
-                    
-                    switch (exInst.exercise.measure) {
-                        case 0: 
-                            descriptionLines.push(`      Reps: ${exInst.inset.join(', ')}`);
-                            break;
-                            
-                        case 1: 
-                            descriptionLines.push(`      Times: ${exInst.inset.join(', ')}`);
-                            break;      
-
-                        case 2: 
-                            descriptionLines.push(`      Distances: ${exInst.inset.join(', ')}`);
-                            break;
-                    
-                        default:
-                            break;
-                    }
-                    
-                    descriptionLines.push(`      Weight: ${exInst.join(', ')}`);
-                    descriptionLines.push(`      Rest Time: ${exInst.restTime} minutes`);
-                });
-            });
-
-
-            cal.createEvent({
-                start: startTime,
-                end: endTime,
-                summary: workoutName || 'Unnamed Workout',
-                description: descriptionLines.join('\n'),
-                location: 'Gym', // TODO: implement saving gym profiles
-                uid: uid, // Use UUID for the event UID
-            });
-        });
-
-        await cal.save(outputPath);
-        logger.debug(`ICS file successfully written to ${outputPath}`);
-    } catch (error) {
-        logger.error(`Error exporting workouts to ICS: ${error.message}`);
-    }
+		await cal.save(outputPath);
+		logger.debug(`ics file successfully written to ${outputPath}`);
+	} catch (err) {
+		console.error(err);
+	}
 };

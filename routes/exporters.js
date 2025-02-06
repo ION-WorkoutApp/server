@@ -17,6 +17,8 @@ router.use((req, res, next) => {
 
 
 const isWithinPastMonth = (date) => {
+	if (process.env.DEBUGGING) return false;
+	
 	const now = new Date();
 	const oneMonthAgo = new Date();
 	oneMonthAgo.setMonth(now.getMonth() - 1);
