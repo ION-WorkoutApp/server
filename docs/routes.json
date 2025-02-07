@@ -1,0 +1,1020 @@
+[
+	{
+		"path": "/exercises",
+		"methods": [
+			"GET"
+		],
+		"middlewares": [
+			"verifyToken"
+		],
+		"category": "exercises",
+		"body": {},
+		"params": [
+			"type",
+			"bodyPart",
+			"equipment",
+			"level",
+			"page",
+			"pageSize"
+		]
+	},
+	{
+		"path": "/exercises/{exerciseId}",
+		"methods": [
+			"GET"
+		],
+		"middlewares": [
+			"verifyToken"
+		],
+		"category": "exercises",
+		"body": {},
+		"params": [
+			"exerciseId"
+		]
+	},
+	{
+		"path": "/exercises",
+		"methods": [
+			"POST"
+		],
+		"middlewares": [
+			"verifyToken"
+		],
+		"category": "exercises",
+		"body": {
+			"exerciseId": "string",
+			"title": "string",
+			"description": "string",
+			"type": "string",
+			"bodyPart": "string",
+			"equipment": "string",
+			"level": "string",
+			"measureType": "number",
+			"perSide": "boolean",
+			"rating": "number",
+			"ratingDescription": "string",
+			"met": "string",
+			"videoPath": "string"
+		},
+		"params": []
+	},
+	{
+		"path": "/exercises/{exerciseId}",
+		"methods": [
+			"PUT"
+		],
+		"middlewares": [
+			"verifyToken"
+		],
+		"category": "exercises",
+		"body": {
+			"title": "string",
+			"description": "string",
+			"type": "string",
+			"bodyPart": "string",
+			"equipment": "string",
+			"level": "string",
+			"measureType": "number",
+			"perSide": "boolean",
+			"rating": "number",
+			"ratingDescription": "string",
+			"met": "string",
+			"videoPath": "string"
+		},
+		"params": [
+			"exerciseId"
+		]
+	},
+	{
+		"path": "/exercises/{exerciseId}",
+		"methods": [
+			"DELETE"
+		],
+		"middlewares": [
+			"verifyToken"
+		],
+		"category": "exercises",
+		"body": {},
+		"params": [
+			"exerciseId"
+		]
+	},
+	{
+		"path": "/workouts",
+		"methods": [
+			"GET"
+		],
+		"middlewares": [
+			"verifyToken"
+		],
+		"category": "workouts",
+		"body": {},
+		"params": [
+			"page",
+			"pageSize",
+			"date"
+		]
+	},
+	{
+		"path": "/workouts/{workoutId}",
+		"methods": [
+			"GET"
+		],
+		"middlewares": [
+			"verifyToken"
+		],
+		"category": "workouts",
+		"body": {},
+		"params": [
+			"workoutId"
+		]
+	},
+	{
+		"path": "/workouts",
+		"methods": [
+			"POST"
+		],
+		"middlewares": [
+			"verifyToken"
+		],
+		"category": "workouts",
+		"body": {
+			"workoutName": "string",
+			"supersets": "see documentation for supersetschema",
+			"totalTime": "number",
+			"workoutTime": "number",
+			"isSaved": "boolean",
+			"calories": "number"
+		},
+		"params": []
+	},
+	{
+		"path": "/workouts",
+		"methods": [
+			"PUT"
+		],
+		"middlewares": [
+			"verifyToken"
+		],
+		"category": "workouts",
+		"body": {
+			"workoutId": "string",
+			"newTime": "number"
+		},
+		"params": [
+			"workoutId"
+		]
+	},
+	{
+		"path": "/workouts/{workoutId}",
+		"methods": [
+			"DELETE"
+		],
+		"middlewares": [
+			"verifyToken"
+		],
+		"category": "workouts",
+		"body": {},
+		"params": [
+			"workoutId"
+		]
+	},
+	{
+		"path": "/users",
+		"methods": [
+			"GET"
+		],
+		"middlewares": [
+			"checkAdmin"
+		],
+		"category": "users",
+		"body": {},
+		"params": [
+			"limit",
+			"after"
+		]
+	},
+	{
+		"path": "/users/{userId}",
+		"methods": [
+			"GET"
+		],
+		"middlewares": [
+			"checkAdmin"
+		],
+		"category": "users",
+		"body": {},
+		"params": [
+			"userId"
+		]
+	},
+	{
+		"path": "/users",
+		"methods": [
+			"POST"
+		],
+		"middlewares": [
+			"none"
+		],
+		"category": "users",
+		"body": {
+			"email": "string",
+			"name": "string",
+			"password": "string",
+			"age": "number",
+			"gender": "string",
+			"height": "number",
+			"weight": "number",
+			"weightUnit": "string",
+			"distanceUnit": "string",
+			"fitnessGoal": "string",
+			"preferredWorkoutType": "string",
+			"comfortLevel": "string",
+			"generalPreferences": {
+				"activityLevel": "string",
+				"preferredWorkoutTime": "string",
+				"workoutFrequency": "number",
+				"injuriesOrLimitations": "array",
+				"equipmentAccess": "array",
+				"preferredWorkoutEnvironment": "string"
+			},
+			"workoutPreferences": {
+				"preferredWorkoutDuration": "number",
+				"exerciseDifficulty": "string",
+				"warmupAndCooldownPreference": "boolean",
+				"preferredWorkoutMusic": "string"
+			},
+			"progressTracking": {
+				"stepGoal": "number",
+				"waterIntakeGoal": "number",
+				"sleepTracking": "boolean"
+			},
+			"notifications": {
+				"remindersEnabled": "boolean",
+				"notificationFrequency": "string",
+				"preferredReminderTime": "string"
+			},
+			"socialPreferences": {
+				"socialSharing": "boolean",
+				"leaderboardParticipation": "boolean",
+				"badgesAndAchievements": "array"
+			}
+		},
+		"params": []
+	},
+	{
+		"path": "/users/{userId}",
+		"methods": [
+			"PUT"
+		],
+		"middlewares": [
+			"verifyToken"
+		],
+		"category": "users",
+		"body": {
+			"name": "string",
+			"password": "string",
+			"age": "number",
+			"gender": "string",
+			"height": "number",
+			"weight": "number",
+			"weightUnit": "string",
+			"distanceUnit": "string",
+			"fitnessGoal": "string",
+			"preferredWorkoutType": "string",
+			"comfortLevel": "string",
+			"generalPreferences": {
+				"activityLevel": "string",
+				"preferredWorkoutTime": "string",
+				"workoutFrequency": "number",
+				"injuriesOrLimitations": "array",
+				"equipmentAccess": "array",
+				"preferredWorkoutEnvironment": "string"
+			},
+			"workoutPreferences": {
+				"preferredWorkoutDuration": "number",
+				"exerciseDifficulty": "string",
+				"warmupAndCooldownPreference": "boolean",
+				"preferredWorkoutMusic": "string"
+			},
+			"progressTracking": {
+				"stepGoal": "number",
+				"waterIntakeGoal": "number",
+				"sleepTracking": "boolean"
+			},
+			"notifications": {
+				"remindersEnabled": "boolean",
+				"notificationFrequency": "string",
+				"preferredReminderTime": "string"
+			},
+			"socialPreferences": {
+				"socialSharing": "boolean",
+				"leaderboardParticipation": "boolean",
+				"badgesAndAchievements": "array"
+			}
+		},
+		"params": [
+			"userId"
+		]
+	},
+	{
+		"path": "/users/{userId}",
+		"methods": [
+			"DELETE"
+		],
+		"middlewares": [
+			"verifyToken"
+		],
+		"category": "users",
+		"body": {},
+		"params": [
+			"userId"
+		]
+	},
+	{
+		"path": "/userstatistics/{userId}",
+		"methods": [
+			"GET"
+		],
+		"middlewares": [
+			"verifyToken"
+		],
+		"category": "statistics",
+		"body": {},
+		"params": [
+			"userId"
+		]
+	},
+	{
+		"path": "/userstatistics",
+		"methods": [
+			"POST"
+		],
+		"middlewares": [
+			"verifyToken"
+		],
+		"category": "statistics",
+		"body": {
+			"user": "string",
+			"performance": {
+				"totalWorkouts": "number",
+				"averageWorkoutDuration": "number",
+				"totalTimeSpent": "number",
+				"totalCaloriesBurned": "number",
+				"completionRate": "number",
+				"averageSets": "number",
+				"averageRestTime": "number",
+				"bestWorkoutDuration": "number",
+				"bestCaloriesBurned": "number",
+				"workoutStreak": "number"
+			},
+			"exerciseUsage": {
+				"popularExerciseTypes": "object",
+				"difficultyDistribution": "object",
+				"averageRating": "number",
+				"exerciseCompletionRate": "number",
+				"mostPerformedExercise": "string",
+				"userFeedbackNotes": "object"
+			},
+			"workoutAnalytics": {
+				"averageSupersetsPerWorkout": "number",
+				"averageExercisesPerSuperset": "number",
+				"supersetCompletionRate": "number",
+				"timeDistribution": {
+					"activeExerciseTime": "number",
+					"restTime": "number"
+				},
+				"progressOverTime": [
+					{
+						"date": "string",
+						"workoutsCompleted": "number",
+						"totalCalories": "number"
+					}
+				],
+				"intensityTrend": [
+					{
+						"date": "string",
+						"activeVsRestRatio": "number"
+					}
+				],
+				"goalAchievementRate": "number"
+			},
+			"preferenceBehavior": {
+				"preferredWorkoutDurationMatch": "number",
+				"workoutFrequencyMatch": "number",
+				"preferenceGapHistory": [
+					{
+						"date": "string",
+						"durationGap": "number",
+						"frequencyGap": "number"
+					}
+				],
+				"recommendationsProvided": "number"
+			}
+		},
+		"params": []
+	},
+	{
+		"path": "/auth/login",
+		"methods": [
+			"POST"
+		],
+		"middlewares": [
+			"authLimiter"
+		],
+		"category": "authentication",
+		"body": {
+			"email": "string",
+			"password": "string"
+		},
+		"params": []
+	},
+	{
+		"path": "/auth/refresh-token",
+		"methods": [
+			"POST"
+		],
+		"middlewares": [
+			"authLimiter"
+		],
+		"category": "authentication",
+		"body": {
+			"refreshToken": "string"
+		},
+		"params": []
+	},
+	{
+		"path": "/auth/checkcredentials",
+		"methods": [
+			"POST"
+		],
+		"middlewares": [
+			"authLimiter"
+		],
+		"category": "authentication",
+		"body": {
+			"email": "string",
+			"password": "string"
+		},
+		"params": []
+	},
+	{
+		"path": "/docs/openapi.json",
+		"methods": [
+			"GET"
+		],
+		"middlewares": [
+			"none"
+		],
+		"category": "documentation",
+		"body": {},
+		"params": []
+	},
+	{
+		"path": "/docs",
+		"methods": [
+			"GET"
+		],
+		"middlewares": [
+			"none"
+		],
+		"category": "documentation",
+		"body": {},
+		"params": []
+	},
+	{
+		"path": "/exercises/exercises",
+		"methods": [
+			"GET"
+		],
+		"middlewares": [
+			"verifyToken"
+		],
+		"category": "exercises",
+		"body": {},
+		"params": [
+			"muscleGroup",
+			"equipment",
+			"difficulty",
+			"minRating",
+			"page",
+			"pageSize",
+			"term"
+		]
+	},
+	{
+		"path": "/exercises/categories",
+		"methods": [
+			"GET"
+		],
+		"middlewares": [
+			"verifyToken"
+		],
+		"category": "exercises",
+		"body": {},
+		"params": [
+			"field"
+		]
+	},
+	{
+		"path": "/workouts/savedworkouts",
+		"methods": [
+			"GET"
+		],
+		"middlewares": [
+			"verifyToken"
+		],
+		"category": "workouts",
+		"body": {},
+		"params": []
+	},
+	{
+		"path": "/workouts/savedworkouts",
+		"methods": [
+			"POST"
+		],
+		"middlewares": [
+			"verifyToken"
+		],
+		"category": "workouts",
+		"body": {
+			"workoutname": "string",
+			"workout": "object"
+		},
+		"params": []
+	},
+	{
+		"path": "/workouts/savedworkouts",
+		"methods": [
+			"DELETE"
+		],
+		"middlewares": [
+			"verifyToken"
+		],
+		"category": "workouts",
+		"body": {
+			"workoutId": "string"
+		},
+		"params": []
+	},
+	{
+		"path": "/workouts/savedworkouts",
+		"methods": [
+			"PUT"
+		],
+		"middlewares": [
+			"verifyToken"
+		],
+		"category": "workouts",
+		"body": {
+			"workoutId": "string",
+			"newName": "string",
+			"newTime": "number"
+		},
+		"params": []
+	},
+	{
+		"path": "/workouts/workout",
+		"methods": [
+			"POST"
+		],
+		"middlewares": [
+			"verifyToken"
+		],
+		"category": "workouts",
+		"body": {
+			"workoutTime": "number",
+			"supersets": "array"
+		},
+		"params": []
+	},
+	{
+		"path": "/workouts/workout",
+		"methods": [
+			"PUT"
+		],
+		"middlewares": [
+			"verifyToken"
+		],
+		"category": "workouts",
+		"body": {
+			"workoutId": "string",
+			"newTime": "number"
+		},
+		"params": []
+	},
+	{
+		"path": "/workouts/workouts",
+		"methods": [
+			"GET"
+		],
+		"middlewares": [
+			"verifyToken"
+		],
+		"category": "workouts",
+		"body": {},
+		"params": [
+			"pagenum",
+			"date"
+		]
+	},
+	{
+		"path": "/workouts/workout",
+		"methods": [
+			"DELETE"
+		],
+		"middlewares": [
+			"verifyToken"
+		],
+		"category": "workouts",
+		"body": {
+			"id": "string"
+		},
+		"params": []
+	},
+	{
+		"path": "/workouts/workoutdates",
+		"methods": [
+			"GET"
+		],
+		"middlewares": [
+			"verifyToken"
+		],
+		"category": "workouts",
+		"body": {},
+		"params": []
+	},
+	{
+		"path": "/workouts/exercise",
+		"methods": [
+			"POST"
+		],
+		"middlewares": [
+			"verifyToken"
+		],
+		"category": "workouts",
+		"body": {
+			"exerciseId": "string",
+			"type": "string",
+			"difficulty": "string",
+			"rating": "number",
+			"isCompleted": "boolean",
+			"feedbackNote": "string"
+		},
+		"params": []
+	},
+	{
+		"path": "/workouts/preferences/update",
+		"methods": [
+			"POST"
+		],
+		"middlewares": [
+			"verifyToken"
+		],
+		"category": "workouts",
+		"body": {
+			"durationGap": "number",
+			"frequencyGap": "number"
+		},
+		"params": []
+	},
+	{
+		"path": "/udata/export",
+		"methods": [
+			"POST"
+		],
+		"middlewares": [
+			"verifyToken"
+		],
+		"category": "userdata",
+		"body": {
+			"format": "string"
+		},
+		"params": []
+	},
+	{
+		"path": "/udata/canrequest",
+		"methods": [
+			"GET"
+		],
+		"middlewares": [
+			"verifyToken"
+		],
+		"category": "userdata",
+		"body": {},
+		"params": []
+	},
+	{
+		"path": "/udata/download",
+		"methods": [
+			"GET"
+		],
+		"middlewares": [
+			"none"
+		],
+		"category": "userdata",
+		"body": {},
+		"params": [
+			"totp",
+			"email"
+		]
+	},
+	{
+		"path": "/udata/status",
+		"methods": [
+			"GET"
+		],
+		"middlewares": [
+			"verifyToken"
+		],
+		"category": "userdata",
+		"body": {},
+		"params": []
+	},
+	{
+		"path": "/udata/stats",
+		"methods": [
+			"GET"
+		],
+		"middlewares": [
+			"verifyToken"
+		],
+		"category": "userdata",
+		"body": {},
+		"params": []
+	},
+	{
+		"path": "/admin/users",
+		"methods": [
+			"GET"
+		],
+		"middlewares": [
+			"checkAdmin"
+		],
+		"category": "administration",
+		"body": {},
+		"params": [
+			"limit",
+			"after"
+		]
+	},
+	{
+		"path": "/admin/users/:id",
+		"methods": [
+			"GET"
+		],
+		"middlewares": [
+			"checkAdmin"
+		],
+		"category": "administration",
+		"body": {},
+		"params": [
+			"id"
+		]
+	},
+	{
+		"path": "/admin/users/:id",
+		"methods": [
+			"DELETE"
+		],
+		"middlewares": [
+			"checkAdmin"
+		],
+		"category": "administration",
+		"body": {},
+		"params": [
+			"id"
+		]
+	},
+	{
+		"path": "/admin/workouts",
+		"methods": [
+			"GET"
+		],
+		"middlewares": [
+			"checkAdmin"
+		],
+		"category": "administration",
+		"body": {},
+		"params": []
+	},
+	{
+		"path": "/admin/workouts/user/:userId",
+		"methods": [
+			"GET"
+		],
+		"middlewares": [
+			"checkAdmin"
+		],
+		"category": "administration",
+		"body": {},
+		"params": [
+			"userId"
+		]
+	},
+	{
+		"path": "/admin/exports",
+		"methods": [
+			"GET"
+		],
+		"middlewares": [
+			"checkAdmin"
+		],
+		"category": "administration",
+		"body": {},
+		"params": []
+	},
+	{
+		"path": "/admin/audit-logs",
+		"methods": [
+			"GET"
+		],
+		"middlewares": [
+			"checkAdmin"
+		],
+		"category": "administration",
+		"body": {},
+		"params": []
+	},
+	{
+		"path": "/admin/health",
+		"methods": [
+			"GET"
+		],
+		"middlewares": [
+			"checkAdmin"
+		],
+		"category": "system",
+		"body": {},
+		"params": []
+	},
+	{
+		"path": "/auth/gencode",
+		"methods": [
+			"POST"
+		],
+		"middlewares": [
+			"authLimiter"
+		],
+		"category": "authentication",
+		"body": {
+			"email": "string"
+		},
+		"params": []
+	},
+	{
+		"path": "/auth/testcode",
+		"methods": [
+			"POST"
+		],
+		"middlewares": [
+			"authLimiter"
+		],
+		"category": "authentication",
+		"body": {
+			"email": "string",
+			"code": "string"
+		},
+		"params": []
+	},
+	{
+		"path": "/auth/initaccount",
+		"methods": [
+			"POST"
+		],
+		"middlewares": [
+			"authLimiter"
+		],
+		"category": "authentication",
+		"body": {
+			"email": "string",
+			"code": "string"
+		},
+		"params": []
+	},
+	{
+		"path": "/users/logout",
+		"methods": [
+			"POST"
+		],
+		"middlewares": [
+			"verifyToken"
+		],
+		"category": "users",
+		"body": {},
+		"params": []
+	},
+	{
+		"path": "/users/userdata",
+		"methods": [
+			"GET"
+		],
+		"middlewares": [
+			"verifyToken"
+		],
+		"category": "users",
+		"body": {},
+		"params": []
+	},
+	{
+		"path": "/users/updatedetails",
+		"methods": [
+			"PUT"
+		],
+		"middlewares": [
+			"verifyToken"
+		],
+		"category": "users",
+		"body": {
+			"email": "string",
+			"password": "string",
+			"otherDetails": "object"
+		},
+		"params": []
+	},
+	{
+		"path": "/users/deleteaccount",
+		"methods": [
+			"DELETE"
+		],
+		"middlewares": [
+			"verifyToken"
+		],
+		"category": "users",
+		"body": {},
+		"params": []
+	},
+	{
+		"path": "/test/getallusers",
+		"methods": [
+			"GET"
+		],
+		"middlewares": [
+			"checkAdmin"
+		],
+		"category": "testing",
+		"body": {},
+		"params": []
+	},
+	{
+		"path": "/test/sysusage",
+		"methods": [
+			"GET"
+		],
+		"middlewares": [
+			"checkAdmin"
+		],
+		"category": "testing",
+		"body": {},
+		"params": []
+	},
+	{
+		"path": "/",
+		"methods": [
+			"HEAD"
+		],
+		"middlewares": [
+			"none"
+		],
+		"category": "general",
+		"body": {},
+		"params": []
+	},
+	{
+		"path": "/isindebugmode",
+		"methods": [
+			"HEAD"
+		],
+		"middlewares": [
+			"none"
+		],
+		"category": "general",
+		"body": {},
+		"params": []
+	},
+	{
+		"path": "/",
+		"methods": [
+			"GET"
+		],
+		"middlewares": [
+			"none"
+		],
+		"category": "general",
+		"body": {},
+		"params": []
+	},
+	{
+		"path": "*",
+		"methods": [
+			"GET",
+			"POST"
+		],
+		"middlewares": [
+			"none"
+		],
+		"category": "general",
+		"body": {},
+		"params": []
+	}
+]

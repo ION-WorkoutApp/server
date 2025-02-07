@@ -9,6 +9,7 @@ import workoutRoutes from './routes/workoutRoutes.js';
 import userDataRoutes from './routes/exporters.js'
 import testingRoutes from './routes/testing.js';
 import genericRoutes from './routes/generic.js';
+import docRoutes from './routes/docs.js'
 import { checkFetchAndImport } from './functions/importCSV.js';
 import { checkForExpiredDocuments } from './exporters/uploader.js';
 import limiter from './helpers/rateLimit.js';
@@ -66,6 +67,7 @@ app.use('/exercises', exerciseRoutes);
 app.use('/udata', userDataRoutes);
 app.use('/workouts', workoutRoutes);
 app.use('/test', testingRoutes); // This has a debug check in the router
+app.use('/docs', docRoutes)
 app.use('/', genericRoutes); // Generic routes on `/`
 
 

@@ -3,6 +3,8 @@ data/
 *.env
 temp.*
 logs/
+temp/
+tmp/
 .logs_old/
 node_modules/
 notfound.txt
