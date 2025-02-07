@@ -7,6 +7,7 @@ import logger from '../helpers/logger.js';
 import * as https from 'https';
 import { createBlankUser, User } from '../models/userSchema.js';
 import { exit } from 'process';
+import { createDefaultPreferencesIfNotPresent } from './preferences.js';
 
 
 // function to check if data already exists
@@ -18,31 +19,6 @@ const checkDataExists = async () => {
 		logger.error('Error checking existing data:', err);
 		throw err;
 	}
-};
-
-
-// function to download and extract dataset
-const fetchDatasetOld = (DATASET_URL, DATA_DIR, i) => {
-	return new Promise((resolve, reject) => {
-		if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR);
-
-		const command = `mkdir -p ${DATA_DIR} && curl -L -o ${i}.zip ${DATASET_URL} && unzip -o ${i}.zip -d ${DATA_DIR} && rm ${i}.zip`;
-		logger.info(`Downloading and unzipping dataset using command "${command}"`);
-
-		const c = exec(command, (err, stdout, stderr) => {
-			if (err) {
-				logger.error('Error downloading or extracting dataset:', err);
-				return reject(err);
-			}
-		});
-
-		c.on('error', logger.error);
-		c.on('message', m => logger.debug(`child proc: ${m.toString()}`));
-		c.on('exit', () => {
-			logger.info('Dataset downloaded and extracted successfully.');
-			resolve();
-		});
-	});
 };
 
 
@@ -167,7 +143,9 @@ export const checkFetchAndImport = async () => {
 			exit(1);
 		}
 		
+		// other imports
 		await createBlankUser(process.env.EMAIL_USER, "password", true);
+		createDefaultPreferencesIfNotPresent();
 
 		logger.debug('No data found. Downloading and importing...');
 

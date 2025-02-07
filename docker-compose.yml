@@ -37,6 +37,7 @@ services:
       - "1221:1221"
     env_file: 
       - .env
+      - settings.env
     environment:
       PORT: 1221
       SECRET_KEY: ${SECRET_KEY}
@@ -57,6 +58,12 @@ services:
     build:
       context: ../admin-portal
       dockerfile: Dockerfile
+      args:
+          REACT_APP_API_BASE_URL: ${REACT_APP_API_BASE_URL}
+    env_file:
+      - ../admin-portal/.env
+    environment:
+      - REACT_APP_API_BASE_URL=https://test.ion606.com
     ports:
       - "1122:80"
     restart: always

@@ -1,6 +1,7 @@
 import logger from '../helpers/logger.js'
+import { calculateRecovery } from './recoveryPercentages.js';
 
-export function analyzeUserData(user) {
+export async function analyzeUserData(user) {
 	if (!user || !Array.isArray(user.workouts)) return { error: 'No user or user workouts found' };
 
 	// prepare data structures for aggregations
@@ -208,6 +209,8 @@ export function analyzeUserData(user) {
 	// 4) Compile final stats object
 	// -------------------------------------------------------------------------
 	return {
+		muscleRecovery: await calculateRecovery(user.email) || {},
+		
 		overallActivity: {
 			totalWorkouts,
 			totalVolume,       // sets*reps*weight sum

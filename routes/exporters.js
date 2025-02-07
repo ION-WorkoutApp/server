@@ -188,7 +188,7 @@ router.get('/stats', async (req, res) => {
 
 		if (!user) return res.status(404).json({ error: 'User not found' });
 
-		const stats = analyzeUserData(user);
+		const stats = await analyzeUserData(user);
 		return res.status(200).json(stats);
 	} catch (error) {
 		console.error('Error while fetching user stats:', error);

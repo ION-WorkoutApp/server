@@ -18,6 +18,7 @@ import adminRouter from './routes/adminRoutes.js';
 
 // load secret key
 if (!process.env.SECRET_KEY) throw "PLEASE MAKE SURE THE SECRET KEY IS IN THE ENV FILE";
+(await import('./functions/preferences.js')).loadSettingsIntoENV()
 
 const app = express();
 const PORT = process.env.PORT || 1221;
