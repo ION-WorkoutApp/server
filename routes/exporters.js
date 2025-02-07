@@ -7,6 +7,7 @@ import logger from '../helpers/logger.js';
 import { User } from '../models/userSchema.js';
 import ExportRequest from '../models/exportSchema.js';
 import { verifyToken } from '../middleware/auth.js';
+import { analyzeUserData } from '../functions/userAnalysis.js';
 
 const router = express.Router();
 
@@ -18,7 +19,7 @@ router.use((req, res, next) => {
 
 const isWithinPastMonth = (date) => {
 	if (process.env.DEBUGGING) return false;
-	
+
 	const now = new Date();
 	const oneMonthAgo = new Date();
 	oneMonthAgo.setMonth(now.getMonth() - 1);
@@ -166,6 +167,34 @@ router.get('/status', async (req, res) => {
 		default: res.status(425).send("Request Pending"); // too early
 	}
 });
+
+
+router.get('/stats', async (req, res) => {
+	try {
+		const { email } = req.user;
+		if (!email) return res.status(404).json({ error: 'user not found' });
+
+		const user = await User.findOne({ email })
+			.select('-password -refreshToken')
+			.populate({
+				path: 'workouts',
+				model: 'Workout',
+				populate: {
+					path: 'supersets.exercises.exercise',
+					model: 'Exercise',
+				},
+			})
+			.lean();
+
+		if (!user) return res.status(404).json({ error: 'User not found' });
+
+		const stats = analyzeUserData(user);
+		return res.status(200).json(stats);
+	} catch (error) {
+		console.error('Error while fetching user stats:', error);
+		return res.status(500).json({ error: 'Internal server error' });
+	}
+})
 
 
 export default router;

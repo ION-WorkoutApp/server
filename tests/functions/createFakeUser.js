@@ -61,6 +61,23 @@ function getRandomElements(arr, n) {
 	return shuffled.slice(0, n);
 }
 
+
+function generateRandomInset() {
+	// generate a random count between 1 and 3 insets
+	const insetCount = Math.floor(Math.random() * 3) + 1;
+	const insets = [];
+	for (let i = 0; i < insetCount; i++) {
+		insets.push({
+			id: randomId(),
+			isDone: Math.random() < 0.5,
+			restTime: Math.floor(Math.random() * 100) + 1, // rest time between 1 and 100
+			distance: Math.random() < 0.5 ? null : Math.floor(Math.random() * 1000), // either null or a random distance
+			value: Math.floor(Math.random() * 50) + 1, // value between 1 and 50
+		});
+	}
+	return insets;
+}
+
 // each containing between 1 and 3 random exercises
 export async function generateSampleWorkout(token) {
 	const categoriesResponse = await getCategories(token, 'bodyPart');
@@ -95,8 +112,8 @@ export async function generateSampleWorkout(token) {
 				exercise: chosenExercise,
 				id: `${chosenExercise.exerciseId}_${randomId()}`,
 				isDone: false,
-				inset: [],
-				weight: [],
+				inset: generateRandomInset(),
+				weight: generateRandomInset(),
 				restTime: Math.floor(Math.random() * 90) + 30, // 30 to 120 seconds
 				sets: Math.floor(Math.random() * 3) + 1,       // 1 to 3 sets
 				setsDone: 0,
