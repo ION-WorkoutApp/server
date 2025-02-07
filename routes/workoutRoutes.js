@@ -39,33 +39,32 @@ router.post('/workout', async (req, res) => {
 			return res.status(404).json({ message: 'User not found.' });
 		}
 
-		console.log(JSON.stringify(req.body))
 		// Insert the workout
 		const statusCode = await insertUserWorkout(user, req.body),
 			{ supersets } = req.body;
-
-		const reduceWithSets = (eAttr) => {
-			return 
-		}
 
 		// If the workout was inserted successfully,
 		// call the updateWorkoutStats function to adjust the statistics.
 		if (statusCode === 200) {
 			const workoutData = {
-				duration: req.body.workoutTime,              // in minutes
+				duration: req.body.workoutTime,  // in minutes
 				caloriesBurned: supersets.reduce((t, superset) => (
-					t + superset.exercises.reduce((eSum, e) => (eSum + e.caloriesBurned), 0)
-				), 0),    // total calories burned
-				sets: supersets.reduce((t, superset) => (t + superset.exercises.reduce((eSum, e) => (eSum + e.inset.length), 0)), 0),
-				restTime: supersets.reduce((t, superset) => (t + superset.exercises.reduce((eSum, e) => (eSum + e.restTime))), 0),                // in seconds
+					t + superset.exercises.reduce((eSum, e) => (eSum + (e.calories || 0)), 0)
+				), 0), // total calories burned
+				sets: supersets.reduce((t, superset) => (
+					t + superset.exercises.reduce((eSum, e) => (eSum + (e.inset?.length || 0)), 0)
+				), 0),
+				restTime: supersets.reduce((t, superset) => (
+					t + superset.exercises.reduce((eSum, e) => (eSum + (e.restTime || 0)), 0)
+				), 0), // in seconds
 				supersetsCount: supersets.length,
 				totalExercisesCount: supersets.reduce((t, superset) => (t + superset.exercises.length), 0), // total exercises in all supersets
-				supersetCompletionRate: calculateSupersetCompletionRate(supersets), // ratio for the workout
-				activeExerciseTime: supersets.reduce((t, superset) => (t + superset.exercises.reduce((eSum, e) => (eSum + e.duration))), 0),  // minutes active
-				// isConsecutive: req.body.isConsecutive,      // boolean: if workout continues a streak
-				// goalAchieved: req.body.goalAchieved         // boolean: did the user meet their workout goal?
-			}
-			
+				supersetCompletionRate: calculateSupersetCompletionRate(supersets) || 0, // ratio for the workout
+				activeExerciseTime: supersets.reduce((t, superset) => (
+					t + superset.exercises.reduce((eSum, e) => (eSum + (e.duration || 0)), 0)
+				), 0), // minutes active
+			};
+
 			await updateWorkoutStats(user._id, workoutData);
 		}
 
