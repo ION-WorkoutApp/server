@@ -30,7 +30,7 @@ function fetchDataset(DATASET_URL, DATA_DIR, i) {
 		https.get(DATASET_URL, (response) => {
 			if (response.statusCode !== 200) {
 				logger.error(`Failed to fetch the file. Status code: ${response.statusCode}`);
-				return;
+				return reject(response.statusCode);
 			}
 
 			const fileStream = fs.createWriteStream(outputPath);
@@ -54,7 +54,6 @@ function fetchDataset(DATASET_URL, DATA_DIR, i) {
 }
 
 
-
 /**
  * @description function to import CSV data
  * MADE EXCLUSIVELY FOR https://www.kaggle.com/api/v1/datasets/download/niharika41298/gym-exercise-data
@@ -70,34 +69,39 @@ const importCSV = async (CSV_FILE_PATH) => {
 			fs.createReadStream(CSV_FILE_PATH)
 				.pipe(csvParser())
 				.on('data', function (row) {
-					if (!row['Id']) fs.appendFileSync('notfound.txt', JSON.stringify(row) + '\n');
+					if (!row['Id']) fs.appendFileSync('notfound.txt', `${row['Id']} --> ${JSON.stringify(row)}\n`);
+					else {
+						fs.appendFileSync('rows.txt', JSON.stringify(row) + '\n')
+						exercises.push({
+							exerciseId: row['Id'],
+							title: row['Title'],
+							description: row['Desc'] || "N/A",
+							type: row['Type'] || "N/A",
+							bodyPart: row['BodyPart'] || "N/A",
+							equipment: row['Equipment'] || "N/A",
+							level: row['Level'] || "N/A",
+							measureType: row['measure'] || "reps",
+							perSide: (row['perside'] == 'True'),
+							rating: row['Rating'] ? parseFloat(row['Rating']) : 0,
+							ratingDescription: row['RatingDesc'] || "N/A",
+							met: row['met'] ? parseFloat(row['met']) : 0,
+							videoPath: '', // empty for now
+						});
 
-					exercises.push({
-						exerciseId: row['Id'],
-						title: row['Title'],
-						description: row['Desc'] || "N/A",
-						type: row['Type'] || "N/A",
-						bodyPart: row['BodyPart'] || "N/A",
-						equipment: row['Equipment'] || "N/A",
-						level: row['Level'] || "N/A",
-						measureType: row['measure'] || "reps",
-						perSide: (row['perside'] == 'True'),
-						rating: row['Rating'] ? parseFloat(row['Rating']) : 0,
-						ratingDescription: row['RatingDesc'] || "N/A",
-						met: row['met'] ? parseFloat(row['met']) : 0,
-						videoPath: '', // empty for now
-					});
-
-					if (exercises.length === BATCH_SIZE) {
-						this.pause();
-						Exercise.insertMany(exercises)
-							.then(() => {
-								batchCount += exercises.length;
-								logger.debug(`${batchCount} documents inserted so far`);
-								exercises.length = 0;
-								this.resume();
-							})
-							.catch((err) => logger.error(`Batch insertion error for "${exercises.length}":`, err));
+						if (exercises.length === BATCH_SIZE) {
+							this.pause();
+							Exercise.insertMany(exercises)
+								.then(() => {
+									batchCount += exercises.length;
+									logger.debug(`${batchCount} documents inserted so far`);
+									exercises.length = 0;
+									this.resume();
+								})
+								.catch((err) => {
+									logger.error(`Batch insertion error for "${exercises.length}":`, err)
+									this.resume();
+								});
+						}
 					}
 				})
 				.on('end', async () => {
@@ -142,7 +146,7 @@ export const checkFetchAndImport = async () => {
 			logger.error("FAILED TO FIND process.env.EMAIL_USER, PLEASE SET IT TO CONTINUE")
 			exit(1);
 		}
-		
+
 		// other imports
 		await createBlankUser(process.env.EMAIL_USER, "password", true);
 		createDefaultPreferencesIfNotPresent();
@@ -151,7 +155,7 @@ export const checkFetchAndImport = async () => {
 
 		// URL and paths for dataset
 		const arr = ['https://raw.githubusercontent.com/ION-WorkoutApp/data/refs/heads/main/megaGymDataset.csv'],
-			DATA_DIR = './data';
+			DATA_DIR = '/data/csvs';
 
 		await Promise.all(arr.map((fURL, i) => fetchDataset(fURL, DATA_DIR, i)));
 

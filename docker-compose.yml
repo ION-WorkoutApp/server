@@ -15,7 +15,7 @@ services:
       MONGO_INITDB_DATABASE: ${MONGO_DATABASE}
       GLIBC_TUNABLES: glibc.pthread.rseq=0        # tcmalloc does not fully support rseq (help)
     volumes:
-      - ./data/mongodb_data:/data/db
+      - mongodb_data:/data/db
 
   redis:
     image: redis:latest
@@ -51,8 +51,8 @@ services:
       - mongodb
       - redis          # app starts last
     volumes:
-      - .:/usr/src/app # Mount local files for development purposes
-      - ./data/exports:/exports
+      - app_data:/data
+      - app_exports:/exports
 
   admin-portal:
     build:
@@ -71,3 +71,5 @@ services:
 volumes:
   mongodb_data:
   redis_data:
+  app_data:
+  app_exports:

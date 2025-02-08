@@ -3,6 +3,7 @@
 
 main: moveLogs run
 
+# cloudflared tunnel run test &> logs/cloudflared.log &
 # single backup of logs
 moveLogs:
 	mkdir -p logs || true
@@ -11,7 +12,6 @@ moveLogs:
 
 run: moveLogs
 	docker compose up -d
-	cloudflared tunnel run test &> logs/cloudflared.log &
 	docker compose logs -f > logs/docker.log &
 
 setup:
@@ -28,10 +28,10 @@ dockerSystemReset:
 
 resetLocal:
 	make stop || true
-	sudo sh -c 'rm -rf data/ && rm -rf logs/ && rm -rf .logs_old/'
+	
 
 stop: moveLogs
-	docker compose down -v
+	docker compose down
 	pkill cloudflared
 
 restart:
