@@ -1,11 +1,12 @@
+import { checkPreference } from "../functions/preferences.js";
 import logger from "./logger.js";
 
 /**
  * @returns false if failed, but it will send the error for you
  */
 export default async function validateConfCode(res, redisClient, email, code, removeCodeOnTrue = true) {
-	if (process.env.DEBUGGING) {
-		logger.info('bypassing conf code due to process.env.DEBUGGING being set');
+	if (!checkPreference("REQUIRE_EMAIL_VERIFICATION")) {
+		logger.debug('bypassing conf code due to REQUIRE_EMAIL_VERIFICATION being set to "true"');
 		return true
 	}
 

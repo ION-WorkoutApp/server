@@ -6,10 +6,10 @@ const DEFAULT_PREFS = {
 	DEBUGGING: "false",
 	ALLOW_SIGNUPS: "true",
 	REQUIRE_EMAIL_VERIFICATION: "true",
-	MIN_PASSWORD_REQ: "true",
-	ALLOW_SOCIAL_LOGINS: "false",
-	LOGIN_LIMIT: "5",
-	ENABLE_MONETIZATION: "false"
+	MIN_PASSWORD_REQ: "true", // unused for now
+	ALLOW_SOCIAL_LOGINS: "false", // 401
+	LOGIN_LIMIT: "5", // TODO
+	ENABLE_MONETIZATION: "false" //  TODO
 };
 
 function loadSettings() {
@@ -97,10 +97,12 @@ function changePreferences(newPrefs) {
 	return current;
 }
 
-function checkPreference(key) {
+function getPreference(key) {
 	if (!DEFAULT_PREFS.hasOwnProperty(key)) throw new Error(`Preference "${key}" is not recognized.`);
 	return process.env[key] || loadSettings()[key] || DEFAULT_PREFS[key];
 }
+
+const checkPreference = (key, val = "true") => (getPreference(key) == val)
 
 
 export {
@@ -109,6 +111,7 @@ export {
 	createDefaultPreferencesIfNotPresent,
 	getAllEnabledPreferences,
 	changePreferences,
-	checkPreference,
-	loadSettingsIntoENV
+	getPreference,
+	loadSettingsIntoENV,
+	checkPreference
 };

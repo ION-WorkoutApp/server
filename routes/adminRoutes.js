@@ -13,7 +13,10 @@ import {
 } from '../functions/preferences.js';
 
 const adminRouter = express.Router();
-adminRouter.use(checkAdmin);
+adminRouter.use((req, res, next) => {
+	if (req.path === '/settings' && req.method.toLowerCase() === 'get') next()
+	else checkAdmin(req, res, next);
+});
 
 
 // Preferences Routes
