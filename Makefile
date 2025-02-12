@@ -28,11 +28,10 @@ dockerSystemReset:
 
 resetLocal:
 	make stop || true
-	
+
 
 stop: moveLogs
 	docker compose down
-	pkill cloudflared
 
 restart:
 	make stop || true
