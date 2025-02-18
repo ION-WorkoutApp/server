@@ -1,11 +1,10 @@
 import mongoose from 'mongoose';
-import { exec } from 'child_process';
 import fs from 'fs';
 import csvParser from 'csv-parser';
 import { Exercise } from '../models/exerciseSchema.js';
 import logger from '../helpers/logger.js';
 import * as https from 'https';
-import { createBlankUser, User } from '../models/userSchema.js';
+import { createBlankUser } from '../models/userSchema.js';
 import { exit } from 'process';
 import { createDefaultPreferencesIfNotPresent } from './preferences.js';
 

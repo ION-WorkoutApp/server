@@ -1,5 +1,6 @@
 import { User } from '../models/userSchema.js';
 
+
 // Helper function to calculate personalized recovery time
 function getPersonalizedRecovery(user, baseTime) {
 	// Age factor: Older users may need more recovery time?
@@ -21,8 +22,23 @@ function getPersonalizedRecovery(user, baseTime) {
 export async function calculateRecovery(email) {
 	try {
 		const DEFAULT_RECOVERY = {
-			'chest': 72, 'back': 72, 'legs': 96,
-			'arms': 48, 'core': 24, 'shoulders': 48
+			'Abdominals': 24,
+			'Adductors': 96,
+			'Abductors': 96,
+			'Biceps': 48,
+			'Calves': 96,
+			'Chest': 72,
+			'Forearms': 48,
+			'Glutes': 96,
+			'Hamstrings': 96,
+			'Lats': 72,
+			'Lower Back': 72,
+			'Middle Back': 72,
+			'Traps': 72,
+			'Neck': 48,
+			'Quadriceps': 96,
+			'Shoulders': 48,
+			'Triceps': 48
 		};
 
 		const user = await User.findOne({ email })
@@ -34,15 +50,15 @@ export async function calculateRecovery(email) {
 				}
 			});
 
+		// raw exercise categories
 		const bodyPartTracker = {};
 
-		// Get all body part last-used dates
-		for (const workout of user.workouts.sort((a, b) => b.date - a.date)) {
+		for (const workout of user.workouts.sort((a, b) => b.createdAt - a.createdAt)) {
 			for (const superset of workout.supersets) {
 				for (const exerciseInst of superset.exercises) {
-					const bodyPart = exerciseInst.exercise.bodyPart;
-					if (!bodyPartTracker[bodyPart] || workout.date > bodyPartTracker[bodyPart]) {
-						bodyPartTracker[bodyPart] = workout.date;
+					const rawBodyPart = exerciseInst.exercise.bodyPart;
+					if (!bodyPartTracker[rawBodyPart] || workout.createdAt > bodyPartTracker[rawBodyPart]) {
+						bodyPartTracker[rawBodyPart] = workout.createdAt;
 					}
 				}
 			}
@@ -68,11 +84,15 @@ export async function calculateRecovery(email) {
 				personalizedRecoveryHours: personalizedRecoveryHours
 			};
 		}
+		
+		const timestamps = user.workouts.map(w => (new Date(w.createdAt)).getTime());
+		const maxTime = new Date(Math.max(...timestamps))
+		recoveryReport.lastUpdated = maxTime.toISOString()
 
 		return recoveryReport;
 	}
 	catch (err) {
 		console.error(err);
-		return null;
+		return {};
 	}
 }
