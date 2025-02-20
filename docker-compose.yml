@@ -13,9 +13,11 @@ services:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
       MONGO_INITDB_DATABASE: ${MONGO_DATABASE}
-      GLIBC_TUNABLES: glibc.pthread.rseq=0        # tcmalloc does not fully support rseq (help)
+      GLIBC_TUNABLES: glibc.pthread.rseq=0 # tcmalloc does not fully support rseq (help)
     volumes:
       - mongodb_data:/data/db
+    networks:
+      - internal
 
   redis:
     image: redis:latest
@@ -26,6 +28,19 @@ services:
     volumes:
       - redis_data:/data
     command: ["redis-server", "--appendonly", "yes"] # Enable AOF persistence
+    networks:
+      - internal
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.10.0
+    environment:
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+      - xpack.security.enabled=false
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+    networks:
+      - internal
 
   app:
     build:
@@ -35,7 +50,7 @@ services:
     restart: always
     ports:
       - "1221:1221"
-    env_file: 
+    env_file:
       - .env
       - settings.env
     environment:
@@ -49,21 +64,26 @@ services:
       REDIS_PORT: 6379
     depends_on:
       - mongodb
-      - redis          # app starts last
+      - redis
+      - elasticsearch # app starts last
     volumes:
       - app_data:/data
       - app_exports:/exports
+      - ./logs:/logs
+    networks:
+      - internal
+      - default
 
   admin-portal:
     build:
       context: ../admin-portal
       dockerfile: Dockerfile
       args:
-          REACT_APP_API_BASE_URL: ${REACT_APP_API_BASE_URL}
+        REACT_APP_API_BASE_URL: ${REACT_APP_API_BASE_URL}
     env_file:
       - ../admin-portal/.env
     environment:
-      - REACT_APP_API_BASE_URL=https://test.ion606.com
+      - REACT_APP_API_BASE_URL=https://workoutep.ion606.com
     ports:
       - "1122:80"
     restart: always
@@ -73,3 +93,11 @@ volumes:
   redis_data:
   app_data:
   app_exports:
+  esdata:
+
+networks:
+  internal:
+    name: workout_app_internal_network
+    internal: true
+  default: # host-accessible networking
+      driver: bridge

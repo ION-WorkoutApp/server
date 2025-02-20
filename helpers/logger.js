@@ -1,5 +1,7 @@
 import { createLogger, format, transports } from 'winston';
 
+const lPath = '/logs'; // 'logs'
+
 const logger = createLogger({
     level: 'debug',
     format: format.combine(
@@ -14,11 +16,11 @@ const logger = createLogger({
             format: format.combine(format.colorize())
         }),
         new transports.File({ 
-            filename: 'logs/app.log',
+            filename: `${lPath}/app.log`,
             level: 'info' // info and above (info, warn, error)
         }),
         new transports.File({ 
-            filename: 'logs/debug.log',
+            filename: `${lPath}/debug.log`,
             level: 'debug' // only debug messages
         })
     ]

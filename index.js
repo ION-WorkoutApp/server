@@ -23,6 +23,9 @@ if (!process.env.SECRET_KEY) throw "PLEASE MAKE SURE THE SECRET KEY IS IN THE EN
 const app = express();
 const PORT = process.env.PORT || 1221;
 
+// trust first proxy (Docker's internal network)
+app.set('trust proxy', 1); // trust 1 hop
+
 // middlewares
 app.use(express.raw());
 app.use(express.json());
@@ -38,6 +41,9 @@ async function initializeDb() {
 	try {
 		await mongoose.connect(mongoUri);
 		logger.info('Connected to MongoDB');
+
+		// logger.info('Starting exercise change worker');
+		// (await import('./search/search.js')).createWatchWorker().then(() => logger.info('Created exercise change worker'));
 
 		checkForExpiredDocuments();
 		logger.info('Started expired docs scanner');
@@ -73,7 +79,7 @@ app.use('/', genericRoutes); // Generic routes on `/`
 
 
 // start the server
-app.listen(PORT, async () => {
+app.listen(PORT, '0.0.0.0', async () => {
 	(await import('dns')).lookup((await import('os')).hostname(), { family: 4 }, (err, addr) => {
 		if (!err) {
 			logger.info(`Server is running on http://${addr}:${PORT}`);
