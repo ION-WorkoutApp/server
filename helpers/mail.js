@@ -21,6 +21,8 @@ export default async function sendEmail(to, subject, text) {
             text,
         };
 
+		if (process.env.DEBUGGING) logger.debug(`sending email to ${to}`);
+		
         transporter.sendMail(mailOptions, (error, info) => {
             if (error) logger.error(error);
             else logger.debug('Email sent: ' + info.response);

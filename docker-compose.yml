@@ -50,6 +50,7 @@ services:
     restart: always
     ports:
       - "1221:1221"
+      - "465:465"
     env_file:
       - .env
       - settings.env
