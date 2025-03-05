@@ -10,15 +10,12 @@ const router = express.Router();
 // all paths should use auth
 router.use(verifyToken);
 
-process.env.useRegexForESearch = true;
-await createExerciseIndex();
-syncExercisesToElastic().catch((err) => {
+// needs to happen async
+syncExercisesToElastic().then(() => createExerciseIndex()).catch((err) => {
 	logger.error(err);
 	logger.error('Failed to sync Elastic search, switching to regex');
-}).then(() => {
-	logger.info('synced Elastic search');
-	process.env.useRegexForESearch = false;
-});
+}).then(() => logger.info('synced Elastic search'));
+
 
 // get exercises
 router.get('/exercises', async (req, res) => {
@@ -38,7 +35,7 @@ router.get('/exercises', async (req, res) => {
 			parsedPageSize = Math.min(Math.max(parseInt(pageSize, 10) || 20, 100)), // Cap at 100 items/page
 
 			startTime = process.hrtime(),
-			orderedExercises = await searchExercises(
+			{ exercises: orderedExercises, total } = await searchExercises(
 				term,
 				muscleGroup,
 				equipment,
@@ -53,10 +50,10 @@ router.get('/exercises', async (req, res) => {
 
 		res.status(200).json({
 			exercises: orderedExercises,
-			total: orderedExercises.length,
+			total,
 			page: parsedPage,
 			pageSize: parsedPageSize,
-			totalPages: Math.ceil(orderedExercises.length / parsedPageSize)
+			totalPages: Math.ceil(total / parsedPageSize)
 		});
 	} catch (err) {
 		console.error(err);

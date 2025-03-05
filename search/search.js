@@ -22,21 +22,29 @@ export async function createWatchWorker() {
 }
 
 const connectToClient = async () => {
+	let error;
 	for (let i = 0; i < 3; i++) {
 		try {
-			return new Client({ node: "http://elasticsearch:9200" });
+			return new Client({ node: "http://elasticsearch:9200", maxRetries: 6 });
 		} catch (err) {
-			console.error(err);
+			await new Promise(resolve => setTimeout(resolve, 2000));
+			error = err;
 		}
 	}
+
+	console.error(error);
 	return null;
 };
 
-const client = await connectToClient();
+
+const clientPromise = connectToClient();
+
 
 // updated index creation with rating field
 export async function createExerciseIndex() {
-	if (!client) return;
+	const client = await clientPromise;
+	if (!client) throw "elastic search object is null";
+
 	if (await client.indices.exists({ index: "exercises" })) return;
 	await client.indices.create({
 		index: "exercises",
@@ -83,6 +91,7 @@ export async function createExerciseIndex() {
 
 // updated sync function with rating
 export async function syncExercisesToElastic() {
+	const client = await clientPromise;
 	if (!client) return;
 
 	// give the elastic 2 mins to update
@@ -109,6 +118,17 @@ export async function syncExercisesToElastic() {
 }
 
 
+function createFilter(term, muscleGroup, equipment, difficulty, minRating) {
+	const filter = {};
+	if (term) filter.title = { $regex: term, $options: "i" };
+	if (muscleGroup) filter.bodyPart = muscleGroup;
+	if (equipment) filter.equipment = equipment;
+	if (difficulty) filter.level = difficulty;
+	if (minRating) filter.rating = { $gte: parseFloat(minRating) };
+	return filter;
+}
+
+
 async function searchRegex(
 	term,
 	muscleGroup,
@@ -119,12 +139,7 @@ async function searchRegex(
 	pageSize = 20
 ) {
 	// build the filter object dynamically
-	const filter = {};
-	if (term) filter.title = { $regex: term, $options: "i" };
-	if (muscleGroup) filter.bodyPart = muscleGroup;
-	if (equipment) filter.equipment = equipment;
-	if (difficulty) filter.level = difficulty;
-	if (minRating) filter.rating = { $gte: parseFloat(minRating) };
+	const filter = createFilter(term, muscleGroup, equipment, difficulty, minRating);
 
 	// pagination
 	const parsedPage = Math.max(0, parseInt(page, 10));
@@ -143,8 +158,9 @@ async function searchRegex(
 	logger.debug(
 		`fetching ${parsedPageSize}/${exercises.length} on page ${page} with filter ${JSON.stringify(filter)}`
 	);
-	return exercises;
+	return { exercises, total: await Exercise.countDocuments(filter) };
 }
+
 
 export async function searchExercises(
 	term,
@@ -156,9 +172,13 @@ export async function searchExercises(
 	pageSize = 20
 ) {
 	try {
+		const client = await clientPromise;
 		if (!client) {
+			logger.debug(`searching for "${term}" using regex`);
 			return searchRegex(term, muscleGroup, equipment, difficulty, minRating, page, pageSize);
 		}
+		else logger.debug(`searching for "${JSON.stringify(createFilter(term, muscleGroup, equipment, difficulty, minRating))}" using elastic`);
+
 		const mustClauses = [];
 		const parsedPage = Math.max(0, parseInt(page, 10));
 		const parsedPageSize = Math.max(1, parseInt(pageSize, 10));
@@ -203,6 +223,13 @@ export async function searchExercises(
 			}
 		});
 
+		const total = await client.count({
+			index: "exercises",
+			body: {
+				query: { bool: { must: mustClauses } }
+			}
+		});
+
 		// mongo document fetching
 		const exerciseIds = hits.hits.map((hit) => hit._id),
 			exercises = await Exercise.find({
@@ -211,9 +238,13 @@ export async function searchExercises(
 
 		// order preservation
 		const exerciseMap = new Map(exercises.map((ex) => [ex.exerciseId, ex]));
-		return exerciseIds.map((id) => exerciseMap.get(id)).filter(Boolean);
+		
+		return {
+			total: total.count,
+			exercises: exerciseIds.map((id) => exerciseMap.get(id)).filter(Boolean)
+		};
 	} catch (err) {
 		console.error(err);
-		return [];
+		return { exercises: [], total: 0 };
 	}
 }
